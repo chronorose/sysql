@@ -8,10 +8,8 @@ rm := rm -f
 
 test:
 	$(cmake)
-	cd build/
-	make
-	./test_suite
-	cd ..
+	cd build/ && make
+	cd build/ && ./test_suite
 
 lexer: $(test)
 	$(CC) src/$(lexer).cpp -o build/lexer -fsanitize=address
@@ -19,6 +17,7 @@ lexer: $(test)
 
 parser: $(test)
 	$(CC) src/$(parser).cpp -o build/parser -fsanitize=address
+	./build/parser
 
 clean:
 	rm -rf ./build/
