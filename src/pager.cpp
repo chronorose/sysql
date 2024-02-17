@@ -55,6 +55,46 @@ istream& operator>>(istream& is, FileHeader& fhdr) {
     return is;
 }
 
+class Page {
+public:
+    long offset;
+    long parent;
+    PgType type;
+    long left_sibling;
+    long right_sibling;
+    long num;
+    Page(long offset) {
+        this->offset = offset;
+        this->parent = 0;
+        this->type = PgType::Leaf;
+        this->left_sibling = 0;
+        this->right_sibling = 0;
+        this->num = 0;
+    }    
+};
+
+ostream& operator<<(ostream& os, Page& pg) {
+    os.seekp(pg.offset);   
+    writeBytes(os, pg.type);
+    writeBytes(os, pg.parent);
+    writeBytes(os, pg.left_sibling);
+    writeBytes(os, pg.right_sibling);
+    writeBytes(os, pg.num);
+    return os;
+}
+
+istream& operator>>(istream& is, Page& pg) {
+    is.seekg(pg.offset);
+    char* buffer = new char[8];
+    pg.type = readBytes<PgType>(is, buffer);
+    pg.parent = readBytes<long>(is, buffer);
+    pg.left_sibling = readBytes<long>(is, buffer);
+    pg.right_sibling = readBytes<long>(is, buffer);
+    pg.num = readBytes<long>(is, buffer);
+    delete[] buffer;
+    return is;
+}
+
 // root -> 8;
 // num of pages -> 16;
 // free space for page -> 24;
@@ -113,52 +153,22 @@ class Pager {
         file_.seekp(offset);
         file_ << pg;
         setFreeOffset(offset + 4096);
+        file_.close();
+    }
+
+    template<typename T> void writeToPage(Page& pg, T val) {
+        if (pg.num < 253) {
+            open_write();
+            file_.seekp(pg.offset + pg.num++ * 16);
+            writeBytes(file_, val);
+            file_.close();
+        }
     }
 
     ~Pager() {
         file_.close();
     }
 };
-
-class Page {
-public:
-    long offset;
-    long parent;
-    PgType type;
-    long left_sibling;
-    long right_sibling;
-    long num;
-    Page(long offset) {
-        this->offset = offset;
-        this->parent = 0;
-        this->type = PgType::Leaf;
-        this->left_sibling = 0;
-        this->right_sibling = 0;
-        this->num = 0;
-    }    
-};
-
-ostream& operator<<(ostream& os, Page& pg) {
-    os.seekp(pg.offset);   
-    writeBytes(os, pg.type);
-    writeBytes(os, pg.parent);
-    writeBytes(os, pg.left_sibling);
-    writeBytes(os, pg.right_sibling);
-    writeBytes(os, pg.num);
-    return os;
-}
-
-istream& operator>>(istream& is, Page& pg) {
-    is.seekg(pg.offset);
-    char* buffer = new char[8];
-    pg.type = readBytes<PgType>(is, buffer);
-    pg.parent = readBytes<long>(is, buffer);
-    pg.left_sibling = readBytes<long>(is, buffer);
-    pg.right_sibling = readBytes<long>(is, buffer);
-    pg.num = readBytes<long>(is, buffer);
-    delete[] buffer;
-    return is;
-}
 
 int main() {
     Pager pager(string("Kek"));
