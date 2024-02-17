@@ -1,40 +1,6 @@
-#include <cctype>
-#include <iostream>
-#include <map>
-#include <vector>
-#include <fstream>
-
-using namespace std;
+#include "Lexer.hpp"
 
 
-enum class LexemeType {
-
-    Identifier = 0,
-    Number,
-    String,
-
-
-    // Single character lexemes
-    Whitespace, Comma, Dot,
-    Semicolon, LeftParen, RightParen,
-    LeftBracket, RightBracket, Letter,
-    Plus, Minus, Star, Equal,
-
-    // Keywords
-    Select, From, Create, Table, Database,
-
-
-    Eof, None,
-};
-
-map<string, LexemeType> keywords {
-    { "select", LexemeType::Select },
-    { "from", LexemeType::From },
-    { "table", LexemeType::Table },
-    { "database", LexemeType::Database },
-    { "create", LexemeType::Create },
-
-};
 
 string LexemeTypeToString(LexemeType type) {
     switch (type) {
@@ -50,6 +16,25 @@ string LexemeTypeToString(LexemeType type) {
             return "Database";
         case LexemeType::Create:
             return "Create";
+        case LexemeType::Delete:
+            return "Delete";
+        case LexemeType::InsertInto:
+            return "InsertInto";
+        case LexemeType::PrimaryKey:
+            return "PrimaryKey";
+
+
+        case LexemeType::Values:
+            return "Values";
+
+        case LexemeType::Int:
+            return "Int";
+        case LexemeType::String:
+            return "String";
+        case LexemeType::Long:
+            return "Long";
+        case LexemeType::Double:
+            return "Double";
 
         case LexemeType::Comma:
             return "Comma";
@@ -58,6 +43,9 @@ string LexemeTypeToString(LexemeType type) {
         case LexemeType::Semicolon:
             return "Semicolon";
 
+        case LexemeType::Number:
+            return "Number";
+
         case LexemeType::None:
             return "None";
         case LexemeType::Eof:
@@ -65,7 +53,6 @@ string LexemeTypeToString(LexemeType type) {
         default:
             return "Type not in enum";
     }
-    return string("TODO");
 }
 
 
@@ -90,12 +77,17 @@ class Lexer {
     public:
         size_t cursor;
         size_t start;
+        size_t back;
         string inputBuffer;
 
         vector<Lexeme> lexemes;
 
         void addLexeme(Lexeme lexeme) {
             lexemes.push_back(lexeme);
+        }
+        void error(string errorMsg) {
+            cout << errorMsg << endl;
+            exit(1);
         }
 
         bool isEnd() { return cursor >= inputBuffer.length(); }
@@ -111,6 +103,9 @@ class Lexer {
         char peek() {
             return isEnd() ? '\0' : inputBuffer.at(cursor);
         }
+        char peekNext() {
+            return cursor + 1 >= inputBuffer.length() ? '\0' : inputBuffer.at(cursor + 1);
+        }
         bool match(char expected) {
             if(isEnd()) {
                 return false;
@@ -120,9 +115,26 @@ class Lexer {
             moveCursor();
             return true;
         }
-        void identifier() {
+        void readIdentifier() {
             while (isalpha(peek()) || isdigit(peek()))
                 advanceCursor();
+        }
+        void readNumber() {
+            while (isdigit(peek())) advanceCursor();
+            if (peek() == '.') {
+                if (!isdigit(peekNext()))
+                    return;
+                while (isdigit(peek())) advanceCursor();
+            }
+        }
+        void readString() {
+            while (peek() != '"' && !isEnd()) {
+                advanceCursor();
+            }
+            if (isEnd()) {
+                error("Unterminated string");
+            }
+            advanceCursor();
         }
         void skipWhitespace() {
             for (;;) {
@@ -155,23 +167,55 @@ class Lexer {
                     return makeLexeme(LexemeType::Star, "*");
                 case ';':
                     return makeLexeme(LexemeType::Semicolon, ";");
-                    break;
                 case ',':
                     return makeLexeme(LexemeType::Comma, ",");
-                case '.':
-                    return makeLexeme(LexemeType::Dot, ".");
+                case '(':
+                    return makeLexeme(LexemeType::LeftParen, "(");
+                case ')':
+                    return makeLexeme(LexemeType::RightParen, ")");
+                case '{':
+                    return makeLexeme(LexemeType::LeftBracket, "{");
+                case '}':
+                    return makeLexeme(LexemeType::RightBracket, "}");
+                case '"' : {
+                    readString();
+                    string substr = inputBuffer.substr(start + 1, cursor - start - 2);
+                    return makeLexeme(LexemeType::String, substr);
+                }
                 default:
                     if (isalpha(ch)) {
-                        identifier();
-                        string substring = inputBuffer.substr(start, cursor);
+                        readIdentifier();
+                        string substring = inputBuffer.substr(start, cursor - start);
+                        if (halvedKeywords[substring] == LexemeType::Primary && 
+                                matchNextLexeme("key")
+                                ) {
+                            return makeLexeme(LexemeType::PrimaryKey, "primary key");
+                        } else if(halvedKeywords[substring] == LexemeType::Insert &&
+                                matchNextLexeme("into")) {
+                                return makeLexeme(LexemeType::InsertInto, "insert into");
+                                }
                         if (!isKeyword(substring)) {
                             return makeLexeme(LexemeType::Identifier, substring);
                         } else {
                             return makeLexeme(keywords[substring], substring);
                         }
+                    } else if (isdigit(ch)) {
+                        readNumber();
+                        string substring = inputBuffer.substr(start, cursor - start);
+                        return makeLexeme(LexemeType::Number, substring);
+                    } else {
+                        cout << "Unexpected character " << ch << endl;
                     }
             }
             return makeLexeme(LexemeType::None, "");
+        }
+        bool matchNextLexeme(string expected) {
+            back = cursor;
+            Lexeme lexeme = scanLexeme();
+            if (lexeme.value == expected)
+                return true;
+            cursor = back;
+            return false;
         }
         void lex() {
             for (;;) {
@@ -180,10 +224,6 @@ class Lexer {
                 if (lexeme.type == LexemeType::Eof)
                     break;
             }
-            char ch;
-            while ((ch = advanceCursor()) != 0) {
-                cout << ch << endl;
-        }
         }
         void printLexemes() {
             for(size_t i = 0; i < lexemes.size(); i++) {
@@ -192,29 +232,26 @@ class Lexer {
         }
         Lexer(string inputBuffer) {
             this->cursor = 0;
+            this->back = 0;
             this->start = 0;
             this->inputBuffer = inputBuffer;
         }
         Lexer() {
             this->start = 0;
             this->cursor = 0;
+            this->back = 0;
             this->inputBuffer = "";
         }
 };
 string readQueryFromFile(string filePath) {
-    ifstream fs;
-    fs.open(filePath);
-    string content;
-    char ch;
-    for ( ;; ) {
-        fs >> ch;
-        if (fs.eof())
-            break;
-        content += ch;
-
+    ifstream fs(filePath);
+    if (!fs) {
+        cout << "File " << filePath << " not opened" << endl;
     }
+    stringstream strStream;
+    strStream << fs.rdbuf();
     fs.close();
-    return content;
+    return strStream.str();
 }
 
 int main(int argc, char* argv[]) {
