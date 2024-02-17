@@ -85,6 +85,10 @@ class Lexer {
         void addLexeme(Lexeme lexeme) {
             lexemes.push_back(lexeme);
         }
+        void error(string errorMsg) {
+            cout << errorMsg << endl;
+            exit(1);
+        }
 
         bool isEnd() { return cursor >= inputBuffer.length(); }
         void moveCursor() {
@@ -111,17 +115,26 @@ class Lexer {
             moveCursor();
             return true;
         }
-        void identifier() {
+        void readIdentifier() {
             while (isalpha(peek()) || isdigit(peek()))
                 advanceCursor();
         }
-        void number() {
+        void readNumber() {
             while (isdigit(peek())) advanceCursor();
             if (peek() == '.') {
                 if (!isdigit(peekNext()))
                     return;
                 while (isdigit(peek())) advanceCursor();
             }
+        }
+        void readString() {
+            while (peek() != '"' && !isEnd()) {
+                advanceCursor();
+            }
+            if (isEnd()) {
+                error("Unterminated string");
+            }
+            advanceCursor();
         }
         void skipWhitespace() {
             for (;;) {
@@ -164,9 +177,14 @@ class Lexer {
                     return makeLexeme(LexemeType::LeftBracket, "{");
                 case '}':
                     return makeLexeme(LexemeType::RightBracket, "}");
+                case '"' : {
+                    readString();
+                    string substr = inputBuffer.substr(start + 1, cursor - start - 2);
+                    return makeLexeme(LexemeType::String, substr);
+                }
                 default:
                     if (isalpha(ch)) {
-                        identifier();
+                        readIdentifier();
                         string substring = inputBuffer.substr(start, cursor - start);
                         if (halvedKeywords[substring] == LexemeType::Primary && 
                                 matchNextLexeme("key")
@@ -182,7 +200,7 @@ class Lexer {
                             return makeLexeme(keywords[substring], substring);
                         }
                     } else if (isdigit(ch)) {
-                        number();
+                        readNumber();
                         string substring = inputBuffer.substr(start, cursor - start);
                         return makeLexeme(LexemeType::Number, substring);
                     } else {
