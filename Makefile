@@ -12,7 +12,7 @@ test:
 	cd build/ && ./test_suite
 
 lexer: $(test)
-	$(CC) src/$(lexer).cpp -o build/lexer -fsanitize=address
+	clear && $(CC) src/$(lexer).cpp -o build/lexer -fsanitize=address
 	./build/lexer
 
 parser: $(test)

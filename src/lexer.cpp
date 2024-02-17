@@ -84,7 +84,9 @@ class Scanner {
         size_t currentIndex;
         string inputBuffer;
         void scan() {
-
+            while (getline(cin, inputBuffer)) {
+                cout << inputBuffer << endl;
+            }
         }
         Scanner() {
             currentIndex = 0;
@@ -94,12 +96,18 @@ class Scanner {
 
 class Lexer {
     public:
-        Lexer() {
-            cout << "Hello from Lexer" << endl;
+        Scanner scanner;
+        void lex() {
+            scanner.scan();
+        }
+        Lexer(Scanner scanner) {
+            this->scanner = scanner;
         }
 };
 
 int main() {
-    Lexer lexer;
+    Scanner scanner;
+    Lexer lexer(scanner);
+    lexer.lex();
     return 0;
 }
