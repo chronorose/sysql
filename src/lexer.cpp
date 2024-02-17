@@ -1,10 +1,12 @@
+#include <cctype>
 #include <iostream>
 #include <map>
+#include <vector>
 
 using namespace std;
 
 
-enum LexemeType {
+enum class LexemeType {
 
     Identifier = 0,
     Number,
@@ -24,40 +26,34 @@ enum LexemeType {
     None
 };
 
-map<LexemeType, string> keywords {
-    { Select, "select" },
-    { From, "from" },
-    { Table, "table" },
-    { Database, "database" },
-    { Database, "database" },
+map<string, LexemeType> keywords {
+    { "select", LexemeType::Select },
+    { "from", LexemeType::From },
+    { "table", LexemeType::Table },
+    { "database", LexemeType::Database },
+    { "create", LexemeType::Create },
 
 };
 
 string LexemeTypeToString(LexemeType type) {
-    // switch (type) {
-    //     case Identifier:
-    //         return "Identifier";
-    //     case Whitespace:
-    //         return "Whitespace";
-    //     case Comma:
-    //         return "Comma";
-    //     case String:
-    //         return "String";
-    //     case Dot:
-    //         return "Dot";
-    //     case LeftParen:
-    //         return "LeftParen";
-    //     case RightParen:
-    //         return "RightParen";
-    //     case LeftBracket:
-    //         return "LeftBracket";
-    //     case RightBracket:
-    //         return "RightBracket";
-    //     case None:
-    //         return "None";
-    //     default:
-    //         return "Type not in enum";
-    // }
+    switch (type) {
+        case LexemeType::Identifier:
+            return "Identifier";
+        case LexemeType::Select:
+            return "Select";
+        case LexemeType::From:
+            return "From";
+        case LexemeType::Table:
+            return "Table";
+        case LexemeType::Database:
+            return "Database";
+        case LexemeType::Create:
+            return "Create";
+        case LexemeType::None:
+            return "None";
+        default:
+            return "Type not in enum";
+    }
     return string("TODO");
 }
 
@@ -68,7 +64,7 @@ class Lexeme {
         string value;
         void print() {
             cout << "Type: " << LexemeTypeToString(type) << endl;
-            cout << "Value: " << value;
+            cout << "Value: " << value << endl;
         }
         Lexeme(LexemeType type, string value) {
             this->type = type;
@@ -79,35 +75,98 @@ class Lexeme {
         }
 };
 
-class Scanner {
-    public:
-        size_t currentIndex;
-        string inputBuffer;
-        void scan() {
-            while (getline(cin, inputBuffer)) {
-                cout << inputBuffer << endl;
-            }
-        }
-        Scanner() {
-            currentIndex = 0;
-            inputBuffer = "";
-        }
-};
-
 class Lexer {
     public:
-        Scanner scanner;
-        void lex() {
-            scanner.scan();
+
+        size_t cursor;
+        string inputBuffer;
+
+        vector<Lexeme> lexemes;
+        void addLexeme(LexemeType type, string value) {
+            Lexeme lexeme(type, value);
+            lexemes.push_back(lexeme);
         }
-        Lexer(Scanner scanner) {
-            this->scanner = scanner;
+
+        bool isEnd() { return cursor == inputBuffer.length(); }
+        bool isKeyword(string key) {
+            return keywords.find(key) != keywords.end();
+        }
+        void moveCursor() { cursor++; }
+        char current() {
+            return isEnd() ? '\0' : inputBuffer.at(cursor);
+        }
+        void lex() {
+            while (getline(cin, inputBuffer)) {
+                while (!isEnd()) {
+                    string buffer = "";
+                    if (isspace(current())) {
+                        moveCursor();
+                        continue;
+                    }
+                    switch(current()) {
+                        case '*':
+                            addLexeme(LexemeType::Star, "*");
+                            moveCursor();
+                            break;
+                        case '.':
+                            addLexeme(LexemeType::Dot, ".");
+                            moveCursor();
+                            break;
+                        case ',':
+                            addLexeme(LexemeType::Comma, ",");
+                            moveCursor();
+                            break;
+                        case '(':
+                            addLexeme(LexemeType::LeftParen, "(");
+                            moveCursor();
+                            break;
+                        case ')':
+                            addLexeme(LexemeType::RightParen, ")");
+                            moveCursor();
+                            break;
+                        case '{':
+                            addLexeme(LexemeType::LeftBracket, "{");
+                            moveCursor();
+                            break;
+                        case '}':
+                            addLexeme(LexemeType::RightBracket, "}");
+                            moveCursor();
+                            break;
+                    }
+                    if (isalpha(current())) {
+                        buffer.push_back(current());
+                        moveCursor();
+                        while (!isspace(current()) && current() != 0) {
+                            buffer.push_back(current());
+                            moveCursor();
+                        }
+                        if (isKeyword(buffer)) {
+                            addLexeme(keywords[buffer], buffer);
+                        } else {
+                            addLexeme(LexemeType::Identifier, buffer);
+                        }
+                    }
+                }
+                moveCursor();
+                printLexemes();
+                inputBuffer = "";
+                cursor = 0;
+                lexemes.clear();
+            }
+        }
+        void printLexemes() {
+            for(size_t i = 0; i < lexemes.size(); i++) {
+                lexemes.at(i).print();
+            }
+        }
+        Lexer() {
+            this->cursor = 0;
+            this->inputBuffer = "";
         }
 };
 
 int main() {
-    Scanner scanner;
-    Lexer lexer(scanner);
+    Lexer lexer;
     lexer.lex();
     return 0;
 }
