@@ -9,32 +9,14 @@ enum class PgType {
 };
 
 class FileHeader {
-    long num_;
-    long root_;
-    long free_;
     public:
+    long num;
+    long root;
+    long free;
     FileHeader() {
-        this->num_ = 0;
-        this->root_ = 0;
-        this->free_ = 32;
-    }
-    void setNum(long num) {
-        this->num_ = num;
-    }
-    void setRoot(long root) {
-        this->root_ = root;
-    }
-    void setFree(long free) {
-        this->free_ = free;
-    }
-    long getNum() const {
-        return this->num_;
-    }
-    long getRoot() const {
-        return this->root_;
-    }
-    long getFree() const {
-        return this->free_;
+        this->num = 0;
+        this->root = 0;
+        this->free = 32;
     }
 };
 
@@ -48,9 +30,9 @@ template<typename T> void writeBytes(ostream& os, T val) {
 
 ostream& operator<<(ostream& os, FileHeader fhdr) {
     os.seekp(8);
-    writeBytes(os, fhdr.getRoot());
-    writeBytes(os, fhdr.getNum());
-    writeBytes(os, fhdr.getFree());
+    writeBytes(os, fhdr.root);
+    writeBytes(os, fhdr.num);
+    writeBytes(os, fhdr.free);
     return os;
 }
 
@@ -62,9 +44,9 @@ template<typename T> T readBytes(istream& is, char* buffer) {
 istream& operator>>(istream& is, FileHeader& fhdr) {
     is.seekg(8);
     char* buffer = new char[8];
-    fhdr.setRoot(readBytes<long>(is, buffer));
-    fhdr.setNum(readBytes<long>(is, buffer));
-    fhdr.setFree(readBytes<long>(is, buffer));
+    fhdr.root = readBytes<long>(is, buffer);
+    fhdr.num = readBytes<long>(is, buffer);
+    fhdr.free = readBytes<long>(is, buffer);
     delete[] buffer;
     return is;
 }
@@ -110,7 +92,7 @@ class Pager {
     }
 
     long getFreeOffset() {
-        return getHeader().getFree();
+        return getHeader().free;
     }
 
     void writePage() {
@@ -127,14 +109,13 @@ class Pager {
 };
 
 class Page {
+public:
     long offset;
     long parent;
     PgType type;
     long left_sibling;
     long right_sibling;
     long num;
-
-    public:
     Page(long offset) {
         this->offset = offset;
         this->parent = 0;
@@ -143,62 +124,26 @@ class Page {
         this->right_sibling = 0;
         this->num = 0;
     }    
-    long getOffset() const {
-        return this->offset;
-    }
-    long getNum() const {
-        return this->num;
-    }
-    void setNum(long num) {
-        this->num = num;
-    }
-    void setOffset(long offset) {
-        this->offset = offset;
-    }
-    long getParent() const {
-        return this->parent;
-    }
-    void setParent(long parent) {
-        this->parent = parent;
-    }
-    PgType getType() const {
-        return this->type;
-    }
-    void setType(PgType type) {
-        this->type = type;
-    }
-    long getLeft() const {
-        return this->left_sibling;
-    }
-    void setLeft(long left) {
-        this->left_sibling = left;
-    }
-    long getRight() const {
-        return this->right_sibling;
-    }
-    void setRight(long right) {
-        this->right_sibling = right;
-    }
 };
 
 ostream& operator<<(ostream& os, Page pg) {
-    os.seekp(pg.getOffset());   
-    writeBytes(os, pg.getType());
-    writeBytes(os, pg.getParent());
-    writeBytes(os, pg.getLeft());
-    writeBytes(os, pg.getRight());
-    writeBytes(os, pg.getNum());
+    os.seekp(pg.offset);   
+    writeBytes(os, pg.type);
+    writeBytes(os, pg.parent);
+    writeBytes(os, pg.left_sibling);
+    writeBytes(os, pg.right_sibling);
+    writeBytes(os, pg.num);
     return os;
 }
 
 istream& operator>>(istream& is, Page& pg) {
-    is.seekg(pg.getOffset());
+    is.seekg(pg.offset);
     char* buffer = new char[8];
-    pg.setType(readBytes<PgType>(is, buffer));
-    pg.setParent(readBytes<long>(is, buffer));
-    pg.setLeft(readBytes<long>(is, buffer));
-    pg.setRight(readBytes<long>(is, buffer));
-    pg.setNum(readBytes<long>(is, buffer));
+    pg.type = readBytes<PgType>(is, buffer);
+    pg.parent = readBytes<long>(is, buffer);
+    pg.left_sibling = readBytes<long>(is, buffer);
+    pg.right_sibling = readBytes<long>(is, buffer);
+    pg.num = readBytes<long>(is, buffer);
     delete[] buffer;
     return is;
 }
