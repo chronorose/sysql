@@ -1,46 +1,64 @@
-#include <cwchar>
 #include <iostream>
+#include <map>
 
 using namespace std;
 
+
 enum LexemeType {
+
     Identifier = 0,
-    Keyword,
+    Number,
+    String,
 
-    Whitespace,
-    Punct,
 
-    LeftParen,
-    RightParen,
+    // Single character lexemes
+    Whitespace, Comma, Dot,
+    Semicolon, LeftParen, RightParen,
+    LeftBracket, RightBracket, Letter,
+    Plus, Minus, Star, Equal,
 
-    LeftBracket,
-    RightBracket,
+    // Keywords
+    Select, From, Create, Table, Database,
+
+
     None
 };
 
+map<LexemeType, string> keywords {
+    { Select, "select" },
+    { From, "from" },
+    { Table, "table" },
+    { Database, "database" },
+    { Database, "database" },
+
+};
+
 string LexemeTypeToString(LexemeType type) {
-    switch (type) {
-        case Identifier:
-            return "Identifier";
-        case Keyword:
-            return "Keyword";
-        case Whitespace:
-            return "Whitespace";
-        case Punct:
-            return "Punct";
-        case LeftParen:
-            return "LeftParen";
-        case RightParen:
-            return "RightParen";
-        case LeftBracket:
-            return "LeftBracket";
-        case RightBracket:
-            return "RightBracket";
-        case None:
-            return "None";
-        default:
-            return "Type not in enum";
-    }
+    // switch (type) {
+    //     case Identifier:
+    //         return "Identifier";
+    //     case Whitespace:
+    //         return "Whitespace";
+    //     case Comma:
+    //         return "Comma";
+    //     case String:
+    //         return "String";
+    //     case Dot:
+    //         return "Dot";
+    //     case LeftParen:
+    //         return "LeftParen";
+    //     case RightParen:
+    //         return "RightParen";
+    //     case LeftBracket:
+    //         return "LeftBracket";
+    //     case RightBracket:
+    //         return "RightBracket";
+    //     case None:
+    //         return "None";
+    //     default:
+    //         return "Type not in enum";
+    // }
+    return string("TODO");
 }
 
 
@@ -60,8 +78,21 @@ class Lexeme {
             type = LexemeType::None;
         }
 };
+
+class Scanner {
+    public:
+        size_t currentIndex;
+        string inputBuffer;
+        void scan() {
+
+        }
+        Scanner() {
+            currentIndex = 0;
+            inputBuffer = "";
+        }
+};
+
 class Lexer {
-    size_t currentIndex;
     public:
         Lexer() {
             cout << "Hello from Lexer" << endl;
@@ -70,7 +101,5 @@ class Lexer {
 
 int main() {
     Lexer lexer;
-    Lexeme lex(LexemeType::Keyword, "Keyword");
-    lex.print();
     return 0;
 }
