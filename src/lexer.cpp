@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -58,6 +59,9 @@ string LexemeTypeToString(LexemeType type) {
         case LexemeType::Semicolon:
             return "Semicolon";
 
+        case LexemeType::Number:
+            return "Number";
+
         case LexemeType::None:
             return "None";
         case LexemeType::Eof:
@@ -111,6 +115,9 @@ class Lexer {
         char peek() {
             return isEnd() ? '\0' : inputBuffer.at(cursor);
         }
+        char peekNext() {
+            return cursor + 1 >= inputBuffer.length() ? '\0' : inputBuffer.at(cursor + 1);
+        }
         bool match(char expected) {
             if(isEnd()) {
                 return false;
@@ -123,6 +130,14 @@ class Lexer {
         void identifier() {
             while (isalpha(peek()) || isdigit(peek()))
                 advanceCursor();
+        }
+        void number() {
+            while (isdigit(peek())) advanceCursor();
+            if (peek() == '.') {
+                if (!isdigit(peekNext()))
+                    return;
+                while (isdigit(peek())) advanceCursor();
+            }
         }
         void skipWhitespace() {
             for (;;) {
@@ -158,17 +173,21 @@ class Lexer {
                     break;
                 case ',':
                     return makeLexeme(LexemeType::Comma, ",");
-                case '.':
-                    return makeLexeme(LexemeType::Dot, ".");
                 default:
                     if (isalpha(ch)) {
                         identifier();
-                        string substring = inputBuffer.substr(start, cursor);
+                        string substring = inputBuffer.substr(start, cursor - start);
                         if (!isKeyword(substring)) {
                             return makeLexeme(LexemeType::Identifier, substring);
                         } else {
                             return makeLexeme(keywords[substring], substring);
                         }
+                    } else if(isdigit(ch)) {
+                        number();
+                        string substring = inputBuffer.substr(start, cursor - start);
+                        return makeLexeme(LexemeType::Number, substring);
+                    } else {
+                        cout << "Unexpected character " << ch << endl;
                     }
             }
             return makeLexeme(LexemeType::None, "");
@@ -180,10 +199,6 @@ class Lexer {
                 if (lexeme.type == LexemeType::Eof)
                     break;
             }
-            char ch;
-            while ((ch = advanceCursor()) != 0) {
-                cout << ch << endl;
-        }
         }
         void printLexemes() {
             for(size_t i = 0; i < lexemes.size(); i++) {
@@ -202,19 +217,14 @@ class Lexer {
         }
 };
 string readQueryFromFile(string filePath) {
-    ifstream fs;
-    fs.open(filePath);
-    string content;
-    char ch;
-    for ( ;; ) {
-        fs >> ch;
-        if (fs.eof())
-            break;
-        content += ch;
-
+    ifstream fs(filePath);
+    if (!fs) {
+        cout << "File " << filePath << " not opened" << endl;
     }
+    stringstream strStream;
+    strStream << fs.rdbuf();
     fs.close();
-    return content;
+    return strStream.str();
 }
 
 int main(int argc, char* argv[]) {
