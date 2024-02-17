@@ -189,8 +189,9 @@ public:
 };
 
 int main() {
- Lexer lexer = Lexer();
- Parser parser = Parser(lexer);
- Parsed parsed = parser.parse();
- cout << (int)parsed.type << "\n";
+  string str = readQueryFromFile("kal");
+  Lexer lexer = Lexer(str);
+  Parser parser = Parser(lexer);
+  Parsed parsed = parser.parse();
+  cout << (int)parsed.type << "\n";
 }
