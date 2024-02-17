@@ -95,10 +95,6 @@ istream& operator>>(istream& is, Page& pg) {
     return is;
 }
 
-// root -> 8;
-// num of pages -> 16;
-// free space for page -> 24;
-
 class Pager {
     string fileName_;
     fstream file_;
@@ -147,12 +143,17 @@ class Pager {
         file_.close();
     }
 
-    void writePage(Page& pg) {
+    void createPage() {
         open_write();
-        long offset = getFreeOffset();
-        file_.seekp(offset);
+        Page pg(getFreeOffset());
+        setFreeOffset(pg.offset + 4096);
         file_ << pg;
-        setFreeOffset(offset + 4096);
+    }
+
+    void rewritePage(Page& pg) {
+        open_write();
+        file_.seekp(pg.offset);
+        file_ << pg;
         file_.close();
     }
 
