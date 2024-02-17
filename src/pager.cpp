@@ -170,8 +170,3 @@ class Pager {
         file_.close();
     }
 };
-
-int main() {
-    Pager pager(string("Kek"));
-    pager.write_initial();
-}
