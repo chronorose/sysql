@@ -48,30 +48,23 @@ template<typename T> void writeBytes(ostream& os, T val) {
 
 ostream& operator<<(ostream& os, FileHeader fhdr) {
     os.seekp(8);
-    // long root = fhdr.getRoot();
-    // long num = fhdr.getNum();
-    // long free = fhdr.getFree();
     writeBytes(os, fhdr.getRoot());
     writeBytes(os, fhdr.getNum());
     writeBytes(os, fhdr.getFree());
-    // writeLong(os, fhdr.getRoot());
-    // writeLong(os, fhdr.getNum());
-    // writeLong(os, fhdr.getFree());
-    // os.write((char *)&root, 8);
-    // os.write((char *)&num, 8);
-    // os.write((char *)&free, 8);
     return os;
+}
+
+template<typename T> T readBytes(istream& is, char* buffer) {
+    is.read(buffer, sizeof(T));
+    return *(T*)buffer;
 }
 
 istream& operator>>(istream& is, FileHeader& fhdr) {
     is.seekg(8);
     char* buffer = new char[8];
-    is.read(buffer, 8);
-    fhdr.setRoot(*(long*)buffer);
-    is.read(buffer, 8);
-    fhdr.setNum(*(long*)buffer);
-    is.read(buffer, 8);
-    fhdr.setFree(*(long*)buffer);
+    fhdr.setRoot(readBytes<long>(is, buffer));
+    fhdr.setNum(readBytes<long>(is, buffer));
+    fhdr.setFree(readBytes<long>(is, buffer));
     delete[] buffer;
     return is;
 }
@@ -139,6 +132,7 @@ class Page {
     PgType type;
     long left_sibling;
     long right_sibling;
+    long num;
 
     public:
     Page(long offset) {
@@ -147,12 +141,67 @@ class Page {
         this->type = PgType::Leaf;
         this->left_sibling = 0;
         this->right_sibling = 0;
+        this->num = 0;
     }    
+    long getOffset() const {
+        return this->offset;
+    }
+    long getNum() const {
+        return this->num;
+    }
+    void setNum(long num) {
+        this->num = num;
+    }
+    void setOffset(long offset) {
+        this->offset = offset;
+    }
+    long getParent() const {
+        return this->parent;
+    }
+    void setParent(long parent) {
+        this->parent = parent;
+    }
+    PgType getType() const {
+        return this->type;
+    }
+    void setType(PgType type) {
+        this->type = type;
+    }
+    long getLeft() const {
+        return this->left_sibling;
+    }
+    void setLeft(long left) {
+        this->left_sibling = left;
+    }
+    long getRight() const {
+        return this->right_sibling;
+    }
+    void setRight(long right) {
+        this->right_sibling = right;
+    }
 };
 
-// ostream& operator<<(ostream& os, Page pg) {
-    
-// }
+ostream& operator<<(ostream& os, Page pg) {
+    os.seekp(pg.getOffset());   
+    writeBytes(os, pg.getType());
+    writeBytes(os, pg.getParent());
+    writeBytes(os, pg.getLeft());
+    writeBytes(os, pg.getRight());
+    writeBytes(os, pg.getNum());
+    return os;
+}
+
+istream& operator>>(istream& is, Page& pg) {
+    is.seekg(pg.getOffset());
+    char* buffer = new char[8];
+    pg.setType(readBytes<PgType>(is, buffer));
+    pg.setParent(readBytes<long>(is, buffer));
+    pg.setLeft(readBytes<long>(is, buffer));
+    pg.setRight(readBytes<long>(is, buffer));
+    pg.setNum(readBytes<long>(is, buffer));
+    delete[] buffer;
+    return is;
+}
 
 int main() {
     Pager pager(string("Kek"));
