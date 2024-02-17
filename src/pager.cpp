@@ -3,6 +3,10 @@
 
 using namespace std;
 
+class Page;
+ostream& operator<<(ostream& os, Page& pg);
+istream& operator>>(istream& is, Page& pg);
+
 enum class PgType {
     Leaf,
     Node  
@@ -66,15 +70,17 @@ class Pager {
         this->fileName_ = fileName;
     }
     void open_read() {
-        file_.open(this->fileName_, ios::binary | fstream::in);
+        if (!file_.is_open()) {
+            file_.open(this->fileName_, ios::binary | fstream::in);
+        }
     }
     void open_write() {
-        file_.open(this->fileName_, ios::binary | fstream::out);
+        if (!file_.is_open()) {
+            file_.open(this->fileName_, ios::binary | fstream::out);
+        }
     }
     void write_initial() {
-        if (!file_.is_open()) {
-            open_write();
-        }
+        open_write();
         writeBytes(file_, "sysql db");
         FileHeader fhdr;
         file_ << fhdr;
@@ -82,9 +88,7 @@ class Pager {
     }
 
     FileHeader getHeader() {
-        if (!file_.is_open()) {
-            open_read();
-        }
+        open_read();
         FileHeader fhdr;
         file_ >> fhdr;
         file_.close();
@@ -95,12 +99,20 @@ class Pager {
         return getHeader().free;
     }
 
-    void writePage() {
-        if (!file_.is_open()) {
-            open_write();
-        }
-        // long offset = getFreeOffset();
+    void setFreeOffset(long free) {
+        FileHeader fhdr = getHeader();
+        fhdr.free = free;
+        open_write();
+        file_ << fhdr;
+        file_.close();
+    }
 
+    void writePage(Page& pg) {
+        open_write();
+        long offset = getFreeOffset();
+        file_.seekp(offset);
+        file_ << pg;
+        setFreeOffset(offset + 4096);
     }
 
     ~Pager() {
@@ -126,7 +138,7 @@ public:
     }    
 };
 
-ostream& operator<<(ostream& os, Page pg) {
+ostream& operator<<(ostream& os, Page& pg) {
     os.seekp(pg.offset);   
     writeBytes(os, pg.type);
     writeBytes(os, pg.parent);
