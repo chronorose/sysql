@@ -1,50 +1,28 @@
 #include "Lexer.hpp"
+#include <gtest/gtest.h>
 
 
 
 string LexemeTypeToString(LexemeType type) {
+    for(auto& it: keywords) {
+        if (it.second == type)
+            return it.first;
+    }
+    // return "Type not in enum";
     switch (type) {
         case LexemeType::Identifier:
             return "Identifier";
-        case LexemeType::Select:
-            return "Select";
-        case LexemeType::From:
-            return "From";
-        case LexemeType::Table:
-            return "Table";
-        case LexemeType::Database:
-            return "Database";
-        case LexemeType::Create:
-            return "Create";
-        case LexemeType::Delete:
-            return "Delete";
-        case LexemeType::InsertInto:
-            return "InsertInto";
-        case LexemeType::PrimaryKey:
-            return "PrimaryKey";
-
-
-        case LexemeType::Values:
-            return "Values";
-
-        case LexemeType::Int:
-            return "Int";
-        case LexemeType::String:
-            return "String";
-        case LexemeType::Long:
-            return "Long";
-        case LexemeType::Double:
-            return "Double";
-
         case LexemeType::Comma:
             return "Comma";
         case LexemeType::Dot:
             return "Dot";
         case LexemeType::Semicolon:
             return "Semicolon";
-
         case LexemeType::Number:
             return "Number";
+        case LexemeType::String:
+            return "String";
+
 
         case LexemeType::None:
             return "None";
@@ -54,8 +32,6 @@ string LexemeTypeToString(LexemeType type) {
             return "Type not in enum";
     }
 }
-
-
 class Lexeme {
     public:
         LexemeType type;
@@ -106,6 +82,9 @@ class Lexer {
         char peekNext() {
             return cursor + 1 >= inputBuffer.length() ? '\0' : inputBuffer.at(cursor + 1);
         }
+        char peekPrev() {
+            return cursor == 0 ? '\0' : inputBuffer.at(cursor - 1);
+        }
         bool match(char expected) {
             if(isEnd()) {
                 return false;
@@ -116,14 +95,13 @@ class Lexer {
             return true;
         }
         void readIdentifier() {
-            while (isalpha(peek()) || isdigit(peek()))
+            while (isalpha(peek()) || isdigit(peek()) || peek() == '_')
                 advanceCursor();
         }
         void readNumber() {
             while (isdigit(peek())) advanceCursor();
             if (peek() == '.') {
                 if (!isdigit(peekNext()))
-                    return;
                 while (isdigit(peek())) advanceCursor();
             }
         }
@@ -200,6 +178,8 @@ class Lexer {
                             return makeLexeme(keywords[substring], substring);
                         }
                     } else if (isdigit(ch)) {
+                        if (isalpha(peek()))
+                            error("Invalid digit in decimal constant");
                         readNumber();
                         string substring = inputBuffer.substr(start, cursor - start);
                         return makeLexeme(LexemeType::Number, substring);
@@ -254,11 +234,14 @@ string readQueryFromFile(string filePath) {
     return strStream.str();
 }
 
+
 int main(int argc, char* argv[]) {
-    string filePath = argc > 1 ? argv[1] : "src/queries.txt";
-    string query = readQueryFromFile(filePath);
-    Lexer lexer(query);
-    lexer.lex();
-    lexer.printLexemes();
+    testing::InitGoogleTest();
+    int res = RUN_ALL_TESTS();
+    // string filePath = argc > 1 ? argv[1] : "src/queries.txt";
+    // string query = readQueryFromFile(filePath);
+    // Lexer lexer(query);
+    // lexer.lex();
+    // lexer.printLexemes();
     return 0;
 }

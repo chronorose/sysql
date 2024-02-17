@@ -30,7 +30,10 @@ enum class LexemeType {
     Insert, Into,
 
     // Data types
-    Int, Long, Double, String,
+    Int, Long, Double, String, StringDataType,
+
+    // Modificators
+    Unique, AutoIncrement,
 
     Eof, None,
 };
@@ -58,6 +61,10 @@ map<string, LexemeType> keywords {
     { "int", LexemeType::Int },
     { "long", LexemeType::Long },
     { "double", LexemeType::Double },
-    { "string", LexemeType::String },
+    { "string", LexemeType::StringDataType },
+
+
+    { "auto_increment", LexemeType::AutoIncrement },
+    { "unique", LexemeType::Unique },
 
 };
