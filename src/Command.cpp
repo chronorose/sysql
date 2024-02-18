@@ -45,6 +45,9 @@ class Command {
     string getMap() {
         return {};
     }
+    Object getObject() {
+      return {};
+    }
 };
 
 class List : public Command {
@@ -52,6 +55,9 @@ class List : public Command {
     Object object;
     List (Object object) {
       this->object = object;
+    }
+    Object getObject() {
+      return this->object;
     }
 };
 
@@ -78,6 +84,10 @@ class Create : public Command {
     string name;
     vector<Field> fields;
 
+    Object getObject() {
+      return this->object;
+    }
+
     string getMap() {
         return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " + fieldsToString();
     }
@@ -98,6 +108,10 @@ class Select : public Command {
     vector<string> selectedFields;
     Node condition;
 
+    Object getObject() {
+      return {};
+    }
+
     string getMap() {
         return "SELECT: table " + table + "i selectedFielda s" +  fieldsToString();
     }
@@ -117,6 +131,10 @@ class Insert : public Command {
     string table;
     vector<Record> records;
 
+    Object getObject() {
+      return {};
+    }
+
     string getMap() {
         return "INSERT: table " + table + " records " + recordsToString();
     }
@@ -127,6 +145,9 @@ class Drop : public Command {
     string name;
     Object object;
     
+    Object getObject() {
+      return this->object;
+    }
     string getMap() {
         return "DROP: name: " + name + to_string((int) object);
     }
