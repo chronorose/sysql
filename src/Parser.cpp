@@ -26,7 +26,7 @@ class Parser {
     int len_;
     int i;
 
-    void cheackSemicolon(int index) {
+    void checkSemicolon(int index) {
         if (lexemes_[index].type != LexemeType::Semicolon) {
             throw ParseException();
         }
@@ -53,7 +53,7 @@ class Parser {
         } else {
             throw ParseException();
         }
-        cheackSemicolon(i++);
+        checkSemicolon(i++);
         return select;
     }
 
@@ -96,7 +96,7 @@ class Parser {
               lexemes_[i++].type == LexemeType::RightParen)) {
             throw ParseException();
         }
-        cheackSemicolon(i++);
+        checkSemicolon(i++);
         return insert;
     }
 
@@ -172,7 +172,7 @@ class Parser {
             default:
                 throw ParseException();
         }
-        cheackSemicolon(i++);
+        checkSemicolon(i++);
         return create;
     }
 
@@ -183,7 +183,7 @@ class Parser {
       }
       use.name = lexemes_[i + 1].value;
       i += 2;
-      cheackSemicolon(i++);
+      checkSemicolon(i++);
       return use;
     }
 
@@ -207,24 +207,38 @@ class Parser {
       } else {
         throw ParseException();
       }
-      cheackSemicolon(i++);
+      checkSemicolon(i++);
       return drop;
     }
 
   public:
     Parser(Lexer lexer) {
-        lexer.lex();
-        lexemes_ = lexer.lexemes;
+        // lexer.lex();
+        lexemes_ = lexer.lex();
         len_ = lexemes_.size();
         lexer.printLexemes();
         i = 0;
     }
+    Parser(string query) {
+        // lexer.lex();
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        len_ = lexemes_.size();
+        lexer.printLexemes();
+        i = 0;
+    }
+    Parser() {
+        i = 0;
+    }
 
-    vector<Parsed> parse() {
+    vector<Parsed> parse(string query) {
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        lexer.printLexemes();
+        i = 0;
+        len_ = lexemes_.size();
         vector<Parsed> parseds;
         while (i < len_ && lexemes_[i].type != LexemeType::Eof) {
-            cout << i << "\n";
-            cout.flush();
             Parsed parsed = Parsed();
             switch (lexemes_[i++].type) {
                 case LexemeType::Using:
@@ -255,11 +269,3 @@ class Parser {
         return parseds;
     }
 };
-//
-// int main() {
-//     string str = readQueryFromFile("kal");
-//     Lexer lexer = Lexer(str);
-//     Parser parser = Parser(lexer);
-//     vector<Parsed> parsed = parser.parse();
-//     cout << parsed.size() << "\n";
-// }
