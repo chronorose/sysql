@@ -16,13 +16,19 @@ class Page;
 ostream& operator<<(ostream& os, Page& pg);
 istream& operator>>(istream& is, Page& pg);
 
-template<typename T> class Data {
+class DBData {
+    public:
+    void getData();
+    void setData();
+};
+
+template<typename T> class Data: DBData {
     T data;  
     public:
-    virtual T getData() {
+    T getData() {
         return this->data;
     }
-    virtual void setData(T data) {
+    void setData(T data) {
         this->data = data;
     }
 };
@@ -101,6 +107,17 @@ class TableHeader {
     }
 };
 
+class Row {
+    vector<DBData>* rowData;
+    public:
+    Row() {
+        this->rowData = new vector<DBData>;
+    }        
+    ~Row() {
+        delete this->rowData;
+    }
+};
+
 template<typename T> char* toBytes(T* val) {
     return (char*)val;
 }
@@ -114,6 +131,10 @@ template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
     while (iter != vec->end()) {
         writeBytes(os, iter);
     }
+}
+
+ostream& operator<<(ostream& os, Row row) {
+    
 }
 
 ostream& operator<<(ostream& os, TableHeader thdr) {
