@@ -22,6 +22,15 @@ class Parsed {
   public:
     Command *command;
     CommandType type;
+    Parsed();
+    Parsed(Command command, CommandType type) {
+        this->command = new Command;
+        this->command = &command;
+        this->type = type;
+    }
+    ~Parsed() {
+        delete this->command;
+    }
 };
 
 class Parser {
@@ -297,7 +306,9 @@ class Parser {
 #endif
         i = 0;
         len_ = lexemes_.size();
-        Parsed parsed = Parsed();
+        // Parsed parsed = Parsed();
+        Command command;
+        CommandType type;
         switch (lexemes_[i++].type) {
             // case LexemeType::Use:
             //     parsed.command = parseUse();
@@ -311,13 +322,26 @@ class Parser {
             //     parsed.command = parseInsert();
             //     parsed.type = CommandType::Insert;
             //     break;
+            case LexemeType::Use:
+                // Parsed parsed(parseUse(), CommandType::Use);
+                command = parseUse();
+                type = CommandType::Use;
+                break;
+            case LexemeType::Select:
+                command = parseSelect();
+                type = CommandType::Select;
+                break;
+            case LexemeType::InsertInto:
+                command = parseInsert();
+                type = CommandType::Insert;
+                break;
             case LexemeType::Create:
-                parsed.command = parseCreate();
-                parsed.type = CommandType::Create;
+                command = parseCreate();
+                type = CommandType::Create;
                 break;
             case LexemeType::Drop:
-                parsed.command = parseDrop();
-                parsed.type = CommandType::Drop;
+                command = parseDrop();
+                type = CommandType::Drop;
                 break;
             // case LexemeType::ListTables:
             //     parsed.command = List(Object::Table);
@@ -329,9 +353,20 @@ class Parser {
             //     parsed.type = CommandType::List;
             //     checkEnd();
             //     break;
+            case LexemeType::ListTables:
+                command = List(Object::Table);
+                type = CommandType::List;
+                checkEnd();
+                break;
+            case LexemeType::ListDatabases:
+                command = List(Object::DataBase);
+                type = CommandType::List;
+                checkEnd();
+                break;
             default:
                 throw ParseException();
         }
+        Parsed parsed(command, type);
         return parsed;
     }
 };
