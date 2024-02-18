@@ -36,6 +36,8 @@ class Database {
             if (!fs::create_directory(root.path() / dbName_)) {
                 cout << "Couldn't create database" << endl;
                 exit(1);
+            } else {
+                cout << "Database \"" << dbName_ << "\" successfully created" << endl;
             }
         }
     }
@@ -85,11 +87,23 @@ class Engine {
         db.create(rootDir_);
     }
 
-    void evalQuery(Parsed token) {
-        switch (token.type) {
+    void evalQuery(Parsed* token) {
+        switch (token->type) {
             case CommandType::Create: {
+                Create* create = static_cast<Create*>(token->command);
+                if (static_cast<Object>(create->object) == Object::DataBase) {
+                    createDb(create->name);
+                } else {
+                    // TODO for tables
+                }
+                break;
             }
             case CommandType::Drop: {
+                Drop* drop = static_cast<Drop*>(token->command);
+                if (static_cast<Object>(drop->object) == Object::DataBase) {
+                    dropDb(drop->name);
+                }
+                break;
             }
             case CommandType::Use: {
             }
@@ -137,8 +151,13 @@ class Engine {
                          << "   ... > ";
                 }
             }
-            Parsed tkn = parser.parse(line.substr(0, line.length() - 2));
-            evalQuery(tkn);
+            try {
+                Parsed tkn = parser.parse(line.substr(0, line.length() - 2));
+                evalQuery(&tkn);
+            }
+            catch (ParseException& e) {
+                cout << e.what();
+            }
         }
     }
 

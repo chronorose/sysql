@@ -11,11 +11,16 @@ using namespace std;
 
 enum class CommandType { Use, Select, Insert, Create, Drop, List };
 
-class ParseException : exception {};
+class ParseException : public exception {
+    public:
+        virtual const char *what() {
+            return "Unexpected command\n";
+        }
+};
 
 class Parsed {
   public:
-    Command command;
+    Command *command;
     CommandType type;
 };
 
@@ -166,8 +171,9 @@ class Parser {
         return insert;
     }
 
-    Command parseCreate() {
-        Create create = Create();
+    Command *parseCreate() {
+        // Create create = Create();
+        Create *create = new Create();
         int j = 0;
         if (i >= len_) {
             throw ParseException();
@@ -175,16 +181,16 @@ class Parser {
         switch (lexemes_[i++].type) {
             case LexemeType::Database:
                 if (i < len_ && lexemes_[i].type == LexemeType::Identifier) {
-                    create.object = Object::DataBase;
-                    create.name = lexemes_[i++].value;
+                    create->object = Object::DataBase;
+                    create->name = lexemes_[i++].value;
                 } else {
                     throw ParseException();
                 }
                 break;
             case LexemeType::Table:
                 if (i < len_ && lexemes_[i].type == LexemeType::Identifier) {
-                    create.object = Object::Table;
-                    create.name = lexemes_[i++].value;
+                    create->object = Object::Table;
+                    create->name = lexemes_[i++].value;
                 } else {
                     throw ParseException();
                 }
@@ -212,16 +218,16 @@ class Parser {
                             throw ParseException();
                     }
                     field.name = lexemeName.value;
-                    create.fields.push_back(field);
+                    create->fields.push_back(field);
                     j++;
 
                     while (i + 1 < len_) {
                         if (lexemes_[i].type == LexemeType::PrimaryKey) {
-                            create.fields[j - 1].options.push_back(Option::PrimaryKey);
+                            create->fields[j - 1].options.push_back(Option::PrimaryKey);
                         } else if (lexemes_[i].type == LexemeType::Unique) {
-                            create.fields[j - 1].options.push_back(Option::Unique);
+                            create->fields[j - 1].options.push_back(Option::Unique);
                         } else if (lexemes_[i].type == LexemeType::AutoIncrement) {
-                            create.fields[j - 1].options.push_back(Option::AutoIncrement);
+                            create->fields[j - 1].options.push_back(Option::AutoIncrement);
                         } else {
                             break;
                         }
@@ -254,23 +260,23 @@ class Parser {
         return use;
     }
 
-    Command parseDrop() {
-        Drop drop = Drop();
+    Command *parseDrop() {
+        Drop *drop = new Drop();
         if (i >= len_) {
             throw ParseException();
         }
         switch (lexemes_[i++].type) {
             case LexemeType::Database:
-                drop.object = Object::DataBase;
+                drop->object = Object::DataBase;
                 break;
             case LexemeType::Table:
-                drop.object = Object::Table;
+                drop->object = Object::Table;
                 break;
             default:
                 throw ParseException();
         }
         if (i < len_ && lexemes_[i].type == LexemeType::Identifier) {
-            drop.name = lexemes_[i++].value;
+            drop->name = lexemes_[i++].value;
         } else {
             throw ParseException();
         }
@@ -278,23 +284,6 @@ class Parser {
         return drop;
     }
   public:
-    // Parser(Lexer lexer) {
-    //     // lexer.lex();
-    //     lexemes_ = lexer.lex();
-    //     len_ = lexemes_.size();
-    //     lexer.printLexemes();
-    //     i = 0;
-    // }
-    //
-    // Parser(string query) {
-    //     // lexer.lex();
-    //     Lexer lexer(query);
-    //     lexemes_ = lexer.lex();
-    //     len_ = lexemes_.size();
-    //     lexer.printLexemes();
-    //     i = 0;
-    // }
-
     Parser() {}
 
 // #define PARSE_DEBUG
@@ -310,18 +299,18 @@ class Parser {
         len_ = lexemes_.size();
         Parsed parsed = Parsed();
         switch (lexemes_[i++].type) {
-            case LexemeType::Use:
-                parsed.command = parseUse();
-                parsed.type = CommandType::Use;
-                break;
-            case LexemeType::Select:
-                parsed.command = parseSelect();
-                parsed.type = CommandType::Select;
-                break;
-            case LexemeType::InsertInto:
-                parsed.command = parseInsert();
-                parsed.type = CommandType::Insert;
-                break;
+            // case LexemeType::Use:
+            //     parsed.command = parseUse();
+            //     parsed.type = CommandType::Use;
+            //     break;
+            // case LexemeType::Select:
+            //     parsed.command = parseSelect();
+            //     parsed.type = CommandType::Select;
+            //     break;
+            // case LexemeType::InsertInto:
+            //     parsed.command = parseInsert();
+            //     parsed.type = CommandType::Insert;
+            //     break;
             case LexemeType::Create:
                 parsed.command = parseCreate();
                 parsed.type = CommandType::Create;
@@ -330,16 +319,16 @@ class Parser {
                 parsed.command = parseDrop();
                 parsed.type = CommandType::Drop;
                 break;
-            case LexemeType::ListTables:
-                parsed.command = List(Object::Table);
-                parsed.type = CommandType::List;
-                checkEnd();
-                break;
-            case LexemeType::ListDatabases:
-                parsed.command = List(Object::DataBase);
-                parsed.type = CommandType::List;
-                checkEnd();
-                break;
+            // case LexemeType::ListTables:
+            //     parsed.command = List(Object::Table);
+            //     parsed.type = CommandType::List;
+            //     checkEnd();
+            //     break;
+            // case LexemeType::ListDatabases:
+            //     parsed.command = List(Object::DataBase);
+            //     parsed.type = CommandType::List;
+            //     checkEnd();
+            //     break;
             default:
                 throw ParseException();
         }

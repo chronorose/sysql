@@ -46,8 +46,8 @@ class Command {
         return {};
     }
     Object getObject() {
-      return {};
-    }
+        return {};
+    };
     string getName() {
       return {};
     }
@@ -58,9 +58,6 @@ class List : public Command {
     Object object;
     List (Object object) {
       this->object = object;
-    }
-    Object getObject() {
-      return this->object;
     }
 };
 
@@ -88,10 +85,10 @@ class Create : public Command {
     vector<Field> fields;
 
     Object getObject() {
-      return this->object;
+      return object;
     }
     string getName() {
-      return this->name;
+      return name;
     }
 
     string getMap() {
@@ -152,7 +149,7 @@ class Drop : public Command {
     Object object;
     
     Object getObject() {
-      return this->object;
+      return object;
     }
     string getMap() {
         return "DROP: name: " + name + to_string((int) object);
