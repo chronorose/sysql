@@ -3,3 +3,4 @@ create table tab (col1 int primary key, col2 long, col3 string);
 create database db;
 insert into tb (c1, c2, c3)
 values (fsgf, 2, dfs);
+drop table td;
