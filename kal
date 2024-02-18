@@ -1,0 +1,1 @@
+create table tab (col1, int; col2, long; col3, string);

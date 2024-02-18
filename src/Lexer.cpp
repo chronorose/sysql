@@ -7,7 +7,6 @@ string LexemeTypeToString(LexemeType type) {
         if (it.second == type)
             return it.first;
     }
-    // return "Type not in enum";
     switch (type) {
         case LexemeType::Identifier:
             return "Identifier";
@@ -17,6 +16,17 @@ string LexemeTypeToString(LexemeType type) {
             return "Dot";
         case LexemeType::Semicolon:
             return "Semicolon";
+        case LexemeType::Quote:
+            return "Quote";
+        case LexemeType::LeftParen:
+            return "LeftParen";
+        case LexemeType::RightParen:
+            return "RightParen";
+        case LexemeType::LeftBracket:
+            return "LeftBracket";
+        case LexemeType::RightBracket:
+            return "RightBracket";
+
         case LexemeType::Number:
             return "Number";
         case LexemeType::String:

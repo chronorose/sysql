@@ -1,8 +1,10 @@
+#include "../src/Engine.cpp"
 #include "../src/Parser.cpp"
-#include <gtest/gtest.h>
 #include <string>
 
 using namespace std;
+
+// ====================LEXER==================== \\
 
 TEST(Test0, Test0) {
     string query = "";
@@ -148,6 +150,9 @@ TEST(CreateTable0, CreateTable0) {
         EXPECT_EQ(expected[i], lexer.lexemes[i].type);
     }
 }
+
+// ====================PARSER==================== \\
+
 TEST(ParserTest, CreateParse) {
   string str { "create database db;\n" };
   Lexer lexer = Lexer(str);
@@ -155,4 +160,25 @@ TEST(ParserTest, CreateParse) {
   Parsed parsed = parser.parse();
   map<string, string> expectMap = {{"object", "1"}, {"name", "db;"}, {"fields", ""}};
   EXPECT_EQ(parsed.command.getMap(), expectMap);
+}
+
+// ====================DB==================== \\
+    
+namespace fs = filesystem;
+TEST(CreateDb0, CreateDb0) {
+    engine::Engine *engine = new engine::Engine();
+    EXPECT_EQ(engine->getRootDir().exists(), 1);
+    string dbName = "first_db";
+    engine->createDb(dbName);
+    cout << engine->getRootDir().path() / fs::path(dbName) << endl;
+    EXPECT_EQ(fs::directory_entry(engine->getRootDir().path() / fs::path(dbName)).exists(), 1);
+    dbName = "second_db";
+    engine->createDb(dbName);
+    EXPECT_EQ(fs::directory_entry(engine->getRootDir().path() / fs::path(dbName)).exists(), 1);
+    delete engine;
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

@@ -6,7 +6,7 @@ using namespace std;
 
 enum class Object { DataBase = 1, Table };
 enum class Type { Int, Long, Double, String };
-enum class Option {PrimaryKey, Unique };
+enum class Option {PrimaryKey, Unique, AutoIncrement };
 
 struct Field {
   Type type;
