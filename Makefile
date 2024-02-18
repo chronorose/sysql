@@ -29,5 +29,8 @@ $(engine): $(test)
 	$(CC) src/$(engine).cpp -o build/engine -fsanitize=address
 	./build/engine
 
+cleanroot:
+	rm -rf .sysql
+
 clean:
 	rm -rf ./build/
