@@ -301,16 +301,7 @@ istream& operator>>(istream& is, Page& pg) {
 
 class Pager {
     string fileName_;
-    // fstream file_;
-    public:
-    // Maybe bad idea
     fstream file_;
-    Pager(string fileName) {
-        this->fileName_ = fileName;
-    }
-    void redirect(string fileName) {
-        this->fileName_ = fileName;
-    }
     void open_read() {
         if (!file_.is_open()) {
             file_.open(this->fileName_, ios::binary | fstream::in);
@@ -321,14 +312,6 @@ class Pager {
             file_.open(this->fileName_, ios::binary | fstream::out);
         }
     }
-    void write_initial() {
-        open_write();
-        writeBytes(file_, SYSQL_HDR);
-        FileHeader fhdr;
-        file_ << fhdr;
-        file_.close();
-    }
-
     long getRowOffset() {
         open_read();
         TableHeader thdr {};
@@ -343,23 +326,6 @@ class Pager {
         file_ << thdr;
         file_.close();
         return thdr;
-    }
-
-    Row readRow(size_t pos) {
-        open_read();
-        TableHeader thdr = getTHdr();
-        file_.seekp(thdr.vecSize * (pos + 1));
-        Row row(thdr.columns);
-        file_ >> row;
-        return row;
-    } 
-
-    void writeRow(size_t pos, Row row) {
-        open_write();
-        TableHeader thdr = getTHdr();
-        file_.seekp(thdr.vecSize * (pos + 1));
-        file_ << row;
-        file_.close();
     }
 
     FileHeader getHeader() {
@@ -382,6 +348,16 @@ class Pager {
         file_.close();
     }
 
+public:
+
+    Pager(string fileName) {
+        this->fileName_ = fileName;
+    }
+
+    void redirect(string fileName) {
+        this->fileName_ = fileName;
+    }
+
     void createPage() {
         open_write();
         Page pg(getFreeOffset());
@@ -396,6 +372,32 @@ class Pager {
         file_.close();
     }
 
+    void write_initial() {
+        open_write();
+        writeBytes(file_, SYSQL_HDR);
+        FileHeader fhdr;
+        file_ << fhdr;
+        file_.close();
+    }
+
+    Row readRow(size_t pos) {
+        open_read();
+        TableHeader thdr = getTHdr();
+        file_.seekp(thdr.vecSize * (pos + 1));
+        Row row(thdr.columns);
+        file_ >> row;
+        return row;
+    } 
+
+    void writeRow(size_t pos, Row row) {
+        open_write();
+        TableHeader thdr = getTHdr();
+        file_.seekp(thdr.vecSize * (pos + 1));
+        file_ << row;
+        file_.close();
+    }
+
+
     template<typename T> void writeToPage(Page& pg, T val) {
         if (pg.num < 253) {
             open_write();
@@ -404,6 +406,7 @@ class Pager {
             file_.close();
         }
     }
+
     bool checkHDR() {
         file_.seekg(0);
         char* buf = new char[SYSQL_HDR_SIZE];
@@ -412,16 +415,14 @@ class Pager {
         delete[] buf;
         return hdrFromFile == hdr;
     }
-    void createDB(string dbName, vector<ColumnType>& columnTypes) {
+
+    void createTable(string dbName, vector<ColumnType>& columnTypes) {
         redirect(dbName);
         write_initial();
         TableHeader tblhdr(columnTypes);
     }
+
     ~Pager() {
         file_.close();
     }
 };
-
-int main() {
-    return 0;
-}
