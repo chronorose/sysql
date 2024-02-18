@@ -5,11 +5,13 @@
 using namespace std;
 
 enum class Object { DataBase = 1, Table };
-enum class Type { Int = 1, Data, String };
+enum class Type { Int, Long, Double, String };
+enum class Option {PrimaryKey, Unique };
 
 struct Field {
   Type type;
   string name;
+  vector<Option> options;
 };
 
 struct Record {
