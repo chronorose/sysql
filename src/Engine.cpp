@@ -1,5 +1,7 @@
-#include "Pager.cpp"
-#include "Parser.cpp"
+#pragma once
+#include "Query.cpp"
+#include <map>
+#include <filesystem>
 #include <dirent.h>
 #include <filesystem>
 #include <map>
@@ -51,7 +53,6 @@ class Database {
             cout << "Database \"" << dbName_ << "\" successfully deleted" << endl;
         }
     }
-
     string getDbName() {
         return dbName_;
     }
@@ -82,9 +83,23 @@ class Engine {
         rootDir_.refresh();
     }
 
+    void dropDb(string dbName) {
+        Database db(dbName);
+        db.drop(rootDir_);
+    }
     void createDb(string dbName) {
         Database db(dbName);
         db.create(rootDir_);
+    }
+        void connectDb(string dbName) {
+            if (!fs::directory_entry(rootDir_.path() / dbName).exists()) {
+                cout << "Couldn't connect to \"" << dbName << "\", database doesn't exist" << endl;
+                delete currentDb_;
+                return;
+            }
+        delete currentDb_;
+        currentDb_ = new Database(dbName);
+        return;
     }
 
     void evalQuery(Parsed* token) {
@@ -118,22 +133,6 @@ class Engine {
         }
     }
 
-    void connectDb(string dbName) {
-        if (!fs::directory_entry(rootDir_.path() / dbName).exists()) {
-            cout << "Couldn't connect to \"" << dbName << "\", database doesn't exist" << endl;
-            delete currentDb_;
-            return;
-        }
-        delete currentDb_;
-        currentDb_ = new Database(dbName);
-        return;
-    }
-
-    void dropDb(string dbName) {
-        Database db(dbName);
-        db.drop(rootDir_);
-    }
-
     void run() {
         Lexer lexer = {};
         Parser parser;
@@ -157,6 +156,7 @@ class Engine {
             }
             catch (ParseException& e) {
                 cout << e.what();
+                Parsed p = parser.parse(line.substr(0, line.length() - 2));
             }
         }
     }
