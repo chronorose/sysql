@@ -24,6 +24,17 @@ enum class ColumnType {
     Int, Long, Double, String
 };
 
+class Buffer {
+    public:
+    char* buffer;
+    Buffer(size_t size) {
+        this->buffer = new char[size];
+    }
+    ~Buffer() {
+        delete[] this->buffer;
+    }
+}
+
 class FileHeader {
     public:
     long num;
@@ -39,10 +50,25 @@ class FileHeader {
 class TableHeader {
     public:
     long vecSize;
+    long rowNum;
     vector<ColumnType>* columns;
     TableHeader(vector<ColumnType>& columns) {
+        *this->columns = columns;
+        this->vecSize = this->columns->size();
+        this->rowNum = 0;
+    }
+    TableHeader(vector<ColumnType>& columns, long rowNum) {
         this->columns = &columns;
         this->vecSize = this->columns->size();
+        this->rowNum = rowNum;
+    }
+    TableHeader() {
+        this->columns = new vector<ColumnType>;
+        this->vecSize = 0;
+        this->rowNum = 0;
+    }
+    ~TableHeader() {
+        delete this->columns;
     }
 };
 
@@ -52,6 +78,16 @@ template<typename T> char* toBytes(T* val) {
 
 template<typename T> void writeBytes(ostream& os, T val) {
     os.write(toBytes(&val), sizeof(val));
+}
+
+template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
+    auto iter { vec->begin() };
+    while (iter != vec->end()) {
+        writeBytes(os, iter);
+    }
+}
+
+ostream& operator<<(ostream& os, TableHeader thdr) {
 }
 
 ostream& operator<<(ostream& os, FileHeader fhdr) {
@@ -69,11 +105,10 @@ template<typename T> T readBytes(istream& is, char* buffer) {
 
 istream& operator>>(istream& is, FileHeader& fhdr) {
     is.seekg(SYSQL_HDR_SIZE);
-    char* buffer = new char[FILE_HDR_SIZE];
-    fhdr.root = readBytes<long>(is, buffer);
-    fhdr.num = readBytes<long>(is, buffer);
-    fhdr.free = readBytes<long>(is, buffer);
-    delete[] buffer;
+    Buffer buf(FILE_HDR_SIZE);
+    fhdr.root = readBytes<long>(is, buf.buffer);
+    fhdr.num = readBytes<long>(is, buf.buffer);
+    fhdr.free = readBytes<long>(is, buf.buffer);
     return is;
 }
 
@@ -107,13 +142,12 @@ ostream& operator<<(ostream& os, Page& pg) {
 
 istream& operator>>(istream& is, Page& pg) {
     is.seekg(pg.offset);
-    char* buffer = new char[8];
-    pg.type = readBytes<PgType>(is, buffer);
-    pg.parent = readBytes<long>(is, buffer);
-    pg.left_sibling = readBytes<long>(is, buffer);
-    pg.right_sibling = readBytes<long>(is, buffer);
-    pg.num = readBytes<long>(is, buffer);
-    delete[] buffer;
+    Buffer buffer(FILE_HDR_SIZE);
+    pg.type = readBytes<PgType>(is, buffer.buffer);
+    pg.parent = readBytes<long>(is, buffer.buffer);
+    pg.left_sibling = readBytes<long>(is, buffer.buffer);
+    pg.right_sibling = readBytes<long>(is, buffer.buffer);
+    pg.num = readBytes<long>(is, buffer.buffer);
     return is;
 }
 
