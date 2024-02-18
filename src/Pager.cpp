@@ -33,7 +33,7 @@ class Buffer {
     ~Buffer() {
         delete[] this->buffer;
     }
-}
+};
 
 class FileHeader {
     public:
@@ -88,6 +88,11 @@ template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
 }
 
 ostream& operator<<(ostream& os, TableHeader thdr) {
+    os.seekp(SYSQL_HDR_SIZE);
+    writeBytes(os, thdr.vecSize);
+    writeBytes(os, thdr.rowNum);
+    writeBytes(os, thdr.columns);
+    return os;
 }
 
 ostream& operator<<(ostream& os, FileHeader fhdr) {
@@ -101,6 +106,24 @@ ostream& operator<<(ostream& os, FileHeader fhdr) {
 template<typename T> T readBytes(istream& is, char* buffer) {
     is.read(buffer, sizeof(T));
     return *(T*)buffer;
+}
+
+// readBytes for vectors; Input: input stream, vector to which we push values, size of it;
+template<typename T> void readBytes(istream& is, vector<T>* vec, size_t size) {
+    Buffer buf(8);
+    for(size_t i = 0; i < size; i++) {
+        vec->push_back(readBytes<T>(is, buf.buffer));
+    }
+}
+
+istream& operator>>(istream& is, TableHeader& thdr) {
+    is.seekg(SYSQL_HDR_SIZE);
+    Buffer buf(FILE_HDR_SIZE);
+    thdr.vecSize = readBytes<long>(is, buf.buffer);
+    thdr.rowNum = readBytes<long>(is, buf.buffer);
+    // uncosistent calling scheme because it is a vector;
+    readBytes(is, thdr.columns, thdr.vecSize);
+    return is;
 }
 
 istream& operator>>(istream& is, FileHeader& fhdr) {
