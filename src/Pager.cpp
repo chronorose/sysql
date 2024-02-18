@@ -3,6 +3,12 @@
 
 using namespace std;
 
+#define SYSQL_HDR "sysql db"
+#define SYSQL_HDR_SIZE 8
+#define FILE_HDR_SIZE 8
+
+#define PAGE_SIZE 4096
+
 class Page;
 ostream& operator<<(ostream& os, Page& pg);
 istream& operator>>(istream& is, Page& pg);
@@ -33,7 +39,7 @@ template<typename T> void writeBytes(ostream& os, T val) {
 }
 
 ostream& operator<<(ostream& os, FileHeader fhdr) {
-    os.seekp(8);
+    os.seekp(SYSQL_HDR_SIZE);
     writeBytes(os, fhdr.root);
     writeBytes(os, fhdr.num);
     writeBytes(os, fhdr.free);
@@ -46,8 +52,8 @@ template<typename T> T readBytes(istream& is, char* buffer) {
 }
 
 istream& operator>>(istream& is, FileHeader& fhdr) {
-    is.seekg(8);
-    char* buffer = new char[8];
+    is.seekg(SYSQL_HDR_SIZE);
+    char* buffer = new char[FILE_HDR_SIZE];
     fhdr.root = readBytes<long>(is, buffer);
     fhdr.num = readBytes<long>(is, buffer);
     fhdr.free = readBytes<long>(is, buffer);
@@ -97,8 +103,10 @@ istream& operator>>(istream& is, Page& pg) {
 
 class Pager {
     string fileName_;
-    fstream file_;
+    // fstream file_;
     public:
+    // Maybe bad idea
+    fstream file_;
     Pager(string fileName) {
         this->fileName_ = fileName;
     }
@@ -117,7 +125,7 @@ class Pager {
     }
     void write_initial() {
         open_write();
-        writeBytes(file_, "sysql db");
+        writeBytes(file_, SYSQL_HDR);
         FileHeader fhdr;
         file_ << fhdr;
         file_.close();
@@ -146,7 +154,7 @@ class Pager {
     void createPage() {
         open_write();
         Page pg(getFreeOffset());
-        setFreeOffset(pg.offset + 4096);
+        setFreeOffset(pg.offset + PAGE_SIZE);
         file_ << pg;
     }
 
@@ -170,3 +178,4 @@ class Pager {
         file_.close();
     }
 };
+

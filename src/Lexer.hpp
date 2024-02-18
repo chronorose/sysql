@@ -24,6 +24,7 @@ enum class LexemeType {
     // Keywords
     Select, From, Create, Table, Database,
     Delete, InsertInto, PrimaryKey, Values,
+    Using,
 
     // Halved keywords
     Primary, Key,
@@ -66,5 +67,6 @@ map<string, LexemeType> keywords {
 
     { "auto_increment", LexemeType::AutoIncrement },
     { "unique", LexemeType::Unique },
+    { "using", LexemeType::Using },
 
 };
