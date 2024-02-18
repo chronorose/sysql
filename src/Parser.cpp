@@ -329,26 +329,16 @@ class Parser {
                 parsed.command = parseDrop();
                 parsed.type = CommandType::Drop;
                 break;
-            // case LexemeType::ListTables:
-            //     parsed.command = List(Object::Table);
-            //     parsed.type = CommandType::List;
-            //     checkEnd();
-            //     break;
-            // case LexemeType::ListDatabases:
-            //     parsed.command = List(Object::DataBase);
-            //     parsed.type = CommandType::List;
-            //     checkEnd();
-            //     break;
-            // case LexemeType::ListTables:
-            //     command = List(Object::Table);
-            //     type = CommandType::List;
-            //     checkEnd();
-            //     break;
-            // case LexemeType::ListDatabases:
-            //     command = List(Object::DataBase);
-            //     type = CommandType::List;
-            //     checkEnd();
-            //     break;
+            case LexemeType::ListTables:
+                parsed.command = new List(Object::Table);
+                parsed.type = CommandType::List;
+                checkEnd();
+                break;
+            case LexemeType::ListDatabases:
+                parsed.command = new List(Object::DataBase);
+                parsed.type = CommandType::List;
+                checkEnd();
+                break;
             default:
                 throw ParseException();
         }

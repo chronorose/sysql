@@ -85,7 +85,13 @@ class Engine {
         Database db(dbName);
         db.drop(rootDir_);
     }
-
+    vector<string> listAllDb() {
+        vector<string> dbs {};
+        for(auto const& dir_entry : fs::directory_iterator(rootDir_.path())) {
+            dbs.push_back(dir_entry.path().filename());
+        }
+        return dbs;
+    }
     void createDb(string dbName) {
         Database db(dbName);
         db.create(rootDir_);
@@ -127,6 +133,15 @@ class Engine {
             case CommandType::Insert: {
             }
             case CommandType::List: {
+                                        List *list = static_cast<List*>(token->command);
+                                        if (static_cast<Object>(list->object) == Object::DataBase) {
+                                            for (auto db : listAllDb()) {
+                                                cout << db << endl;
+                                            }
+                                        } else {
+                                            cout << "*All tables*\n";
+                                        }
+                                        break;
             }
             default: {
             }
