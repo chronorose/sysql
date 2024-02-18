@@ -18,11 +18,11 @@ istream& operator>>(istream& is, Page& pg);
 
 class DBData {
     public:
-    void getData();
+    int getData();
     void setData();
 };
 
-template<typename T> class Data: DBData {
+template<typename T> class Data: public DBData {
     T data;  
     public:
     T getData() {
@@ -33,10 +33,25 @@ template<typename T> class Data: DBData {
     }
 };
 
-class Int: Data<int> {};
-class Long: Data<long> {};
-class Double: Data<double> {};
-class String: Data<char*> {
+class Int: public Data<int> {
+    int data;
+    public:
+    void setData(int data);
+    int getData();
+};
+class Long: public Data<long> {
+    long data;
+    public:
+    void setData(long data);
+    long getData();
+};
+class Double: public Data<double> {
+    double data;
+    public:
+    void setData(double data);
+    double getData();
+};
+class String: public Data<char*> {
     char* data;
     public:
     String() {
@@ -44,6 +59,9 @@ class String: Data<char*> {
     }
     void setData(char* data) {
         strncpy(this->data, data, 256);
+    }
+    char* getData() {
+        return this->data;
     }
     ~String() {
         delete[] this->data;
@@ -108,10 +126,12 @@ class TableHeader {
 };
 
 class Row {
-    vector<DBData>* rowData;
     public:
-    Row() {
+    vector<DBData>* rowData;
+    vector<ColumnType>* typeData;
+    Row(vector<ColumnType>* types) {
         this->rowData = new vector<DBData>;
+        this->typeData = types;
     }        
     ~Row() {
         delete this->rowData;
@@ -126,6 +146,11 @@ template<typename T> void writeBytes(ostream& os, T val) {
     os.write(toBytes(&val), sizeof(val));
 }
 
+template<typename T> void writeBytes(ostream& os, DBData val) {
+    T value = val.getData();
+    os.write(ToBytes(&value), sizeof(value));
+}
+
 template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
     auto iter { vec->begin() };
     while (iter != vec->end()) {
@@ -134,7 +159,11 @@ template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
 }
 
 ostream& operator<<(ostream& os, Row row) {
-    
+    auto iter { row.rowData->begin() };
+    while (iter != row.rowData->end()) {
+        writeBytes(os, iter); 
+    }
+    return os;
 }
 
 ostream& operator<<(ostream& os, TableHeader thdr) {
@@ -158,12 +187,52 @@ template<typename T> T readBytes(istream& is, char* buffer) {
     return *(T*)buffer;
 }
 
+template<typename T> T readBytes(istream& is, char* buffer, size_t size) {
+    is.read(buffer, size);
+    return *(T*)buffer;
+}
+
 // readBytes for vectors; Input: input stream, vector to which we push values, size of it;
 template<typename T> void readBytes(istream& is, vector<T>* vec, size_t size) {
     Buffer buf(8);
     for(size_t i = 0; i < size; i++) {
         vec->push_back(readBytes<T>(is, buf.buffer));
     }
+}
+
+istream& operator>>(istream& is, Row& row) {
+    auto iter { row.typeData->begin() };
+    row.rowData->clear();
+    Buffer buf(256);
+    bool str = false;
+    while (iter != row.typeData->end()) {
+        str = false;
+        switch(*iter.base()) {
+            case ColumnType::Int:
+                Int val_int;
+                val_int.setData(readBytes<int>(is, buf.buffer));
+                row.rowData->push_back(val_int);
+                break;
+            case ColumnType::Long:
+                Long val_long;
+                val_long.setData(readBytes<long>(is, buf.buffer));
+                row.rowData->push_back(val_long);
+                break;
+            case ColumnType::String:
+                str = true;
+                break;
+            case ColumnType::Double:
+                Double val_double;
+                val_double.setData(readBytes<double>(is, buf.buffer));
+                row.rowData->push_back(val_double);
+                break;
+        }
+        if (str) {
+            String val_string {};
+            val_string.setData(readBytes<char*>(is, buf.buffer, 256));
+        }
+    }
+    return is;
 }
 
 istream& operator>>(istream& is, TableHeader& thdr) {
@@ -254,6 +323,39 @@ class Pager {
         file_.close();
     }
 
+    long getRowOffset() {
+        open_read();
+        TableHeader thdr {};
+        file_ << thdr;
+        file_.close();
+        return thdr.vecSize + 24;
+    }
+
+    TableHeader getTHdr() {
+        open_read();
+        TableHeader thdr{};
+        file_ << thdr;
+        file_.close();
+        return thdr;
+    }
+
+    Row readRow(size_t pos) {
+        open_read();
+        TableHeader thdr = getTHdr();
+        file_.seekp(thdr.vecSize * (pos + 1));
+        Row row(thdr.columns);
+        file_ >> row;
+        return row;
+    } 
+
+    void writeRow(size_t pos, Row row) {
+        open_write();
+        TableHeader thdr = getTHdr();
+        file_.seekp(thdr.vecSize * (pos + 1));
+        file_ << row;
+        file_.close();
+    }
+
     FileHeader getHeader() {
         open_read();
         FileHeader fhdr;
@@ -313,4 +415,3 @@ class Pager {
         file_.close();
     }
 };
-
