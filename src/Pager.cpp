@@ -1,11 +1,13 @@
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
 #define SYSQL_HDR "sysql db"
 #define SYSQL_HDR_SIZE 8
 #define FILE_HDR_SIZE 8
+#define TABLE_HDR_START 16
 
 #define PAGE_SIZE 4096
 
@@ -18,6 +20,10 @@ enum class PgType {
     Node  
 };
 
+enum class ColumnType {
+    Int, Long, Double, String
+};
+
 class FileHeader {
     public:
     long num;
@@ -27,6 +33,16 @@ class FileHeader {
         this->num = 0;
         this->root = 0;
         this->free = 32;
+    }
+};
+
+class TableHeader {
+    public:
+    long vecSize;
+    vector<ColumnType>* columns;
+    TableHeader(vector<ColumnType>& columns) {
+        this->columns = &columns;
+        this->vecSize = this->columns->size();
     }
 };
 
@@ -180,6 +196,11 @@ class Pager {
         string hdr(SYSQL_HDR);
         delete[] buf;
         return hdrFromFile == hdr;
+    }
+    void createDB(string dbName, vector<ColumnType>& columnTypes) {
+        redirect(dbName);
+        write_initial();
+        TableHeader tblhdr(columnTypes);
     }
     ~Pager() {
         file_.close();
