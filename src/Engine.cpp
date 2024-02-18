@@ -1,9 +1,19 @@
 #include "Pager.cpp"
 #include <map>
-#include <cstring>
-// #include "Parser.cpp"
+#include <filesystem>
 namespace Engine {
+    namespace fs = std::filesystem;
     class Engine {
+        string defaultSysqlFolderName = ".sysql.db";
+        public:
+        Engine() {
+            fs::directory_entry dir(fs::current_path() / defaultSysqlFolderName);
+            if (!dir.exists())
+                if (!fs::create_directory(dir.path())) {
+                    cout << "Couldn't create .sysqldb directory" << endl;
+                    exit(1);
+            }
+        }
     };
     class Table {
     };
@@ -13,17 +23,7 @@ namespace Engine {
         Pager *pager_;
         map<Table, string> tableFiles_;
         public:
-        bool checkSum() {
-            char buffer[8];
-            pager_->open_read();
-            char *checkSum = readBytes<char *>(pager_->file_, buffer);
-            if (strcmp(checkSum, "sysql db") == 0)
-                return true;
-            return false;
-        }
-        FileHeader getDbHeader() {
-            return pager_->getHeader();
-        }
+        FileHeader getDbHeader() { return pager_->getHeader(); }
         string getDbName() { return dbName_; }
         Database(string dbName) {
             dbName_ = dbName;
@@ -35,21 +35,18 @@ namespace Engine {
             delete pager_;
         }
     };
+    void createDb(string dbName) {
+        Database *db = new Database(dbName);
+        delete db;
+    }
+    void openDb(string dbName) {
+        dbName = "";
+        return;
+    }
 }
 
 int main() {
-    string dbName = "users";
-    cout << dbName <<endl;
-    Engine::Database *db = new Engine::Database(dbName);
-
-    if (!db->checkSum()) {
-        cout << "Not a sysdb file" << endl;
-    } else {
-        FileHeader hdr = db->getDbHeader();
-        cout << "Sysdb file!" << endl;
-        cout << hdr.root;
-    }
-
-    delete db;
+    Engine::Engine *engine = new Engine::Engine();
+    delete engine;
     return 0;
 }
