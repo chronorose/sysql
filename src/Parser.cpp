@@ -26,7 +26,7 @@ class Parser {
     int len_;
     int i;
 
-    void cheackEnd() {
+    void checkEnd() {
         if (i < len_) {
             throw ParseException();
         }
@@ -102,7 +102,7 @@ class Parser {
         if (i < len_ && lexemes_[i++].type == LexemeType::Where) {
           select.condition = parseCondition();
         } else {
-          cheackEnd();
+          checkEnd();
         }
         return select;
     }
@@ -146,7 +146,7 @@ class Parser {
               lexemes_[i++].type == LexemeType::RightParen)) {
             throw ParseException();
         }
-        cheackEnd();
+        checkEnd();
         return insert;
     }
 
@@ -222,7 +222,7 @@ class Parser {
             default:
                 throw ParseException();
         }
-        cheackEnd();
+        checkEnd();
         return create;
     }
 
@@ -233,7 +233,7 @@ class Parser {
       }
       use.name = lexemes_[i + 1].value;
       i += 2;
-      cheackEnd();
+      checkEnd();
       return use;
     }
 
@@ -257,24 +257,38 @@ class Parser {
       } else {
         throw ParseException();
       }
-      cheackEnd();
+      checkEnd();
       return drop;
     }
 
   public:
     Parser(Lexer lexer) {
-        lexer.lex();
-        lexemes_ = lexer.lexemes;
+        // lexer.lex();
+        lexemes_ = lexer.lex();
         len_ = lexemes_.size();
         lexer.printLexemes();
         i = 0;
     }
+    Parser(string query) {
+        // lexer.lex();
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        len_ = lexemes_.size();
+        lexer.printLexemes();
+        i = 0;
+    }
+    Parser() {
+        i = 0;
+    }
 
-    vector<Parsed> parse() {
+    vector<Parsed> parse(string query) {
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        lexer.printLexemes();
+        i = 0;
+        len_ = lexemes_.size();
         vector<Parsed> parseds;
         while (i < len_ && lexemes_[i].type != LexemeType::Eof) {
-            cout << i << "\n";
-            cout.flush();
             Parsed parsed = Parsed();
             switch (lexemes_[i++].type) {
                 case LexemeType::Using:

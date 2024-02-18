@@ -42,7 +42,7 @@ class ConditionTree {
 
 class Command {
   public:
-    map<string, string> getMap() {
+    string getMap() {
         return {};
     }
 };
@@ -50,6 +50,9 @@ class Command {
 class Use : public Command {
   public:
     string name;
+    string getMap() {
+        return "USE: name: " + name;
+    }
 };
 
 class Create : public Command {
@@ -67,9 +70,8 @@ class Create : public Command {
     string name;
     vector<Field> fields;
 
-    map<string, string> getMap() {
-        return {
-            {"object", to_string((int) (object))}, {"name", name}, {"fields", fieldsToString()}};
+    string getMap() {
+        return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " + fieldsToString();
     }
 };
 
@@ -88,8 +90,8 @@ class Select : public Command {
     vector<string> selectedFields;
     Node condition;
 
-    map<string, string> getMap() {
-        return {{"table", table}, {"selectedFields", fieldsToString()}};
+    string getMap() {
+        return "SELECT: table " + table + "i selectedFielda s" +  fieldsToString();
     }
 };
 
@@ -107,8 +109,8 @@ class Insert : public Command {
     string table;
     vector<Record> records;
 
-    map<string, string> getMap() {
-        return {{"table", table}, {"records", recordsToString()}};
+    string getMap() {
+        return "INSERT: table " + table + " records " + recordsToString();
     }
 };
 
@@ -116,4 +118,8 @@ class Drop : public Command {
   public:
     string name;
     Object object;
+    
+    string getMap() {
+        return "DROP: name: " + name + to_string((int) object);
+    }
 };

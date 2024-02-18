@@ -206,13 +206,18 @@ class Lexer {
             cursor = back;
             return false;
         }
-        void lex() {
+        vector<Lexeme> lex() {
             for (;;) {
                 Lexeme lexeme = scanLexeme();
                 addLexeme(lexeme);
                 if (lexeme.type == LexemeType::Eof)
                     break;
             }
+            this->start = 0;
+            this->cursor = 0;
+            this->back = 0;
+            this->inputBuffer = "";
+            return lexemes;
         }
         void printLexemes() {
             for(size_t i = 0; i < lexemes.size(); i++) {
