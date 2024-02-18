@@ -173,7 +173,14 @@ class Pager {
             file_.close();
         }
     }
-
+    bool checkHDR() {
+        file_.seekg(0);
+        char* buf = new char[SYSQL_HDR_SIZE];
+        string hdrFromFile = readBytes<string>(file_, buf);
+        string hdr(SYSQL_HDR);
+        delete[] buf;
+        return hdrFromFile == hdr;
+    }
     ~Pager() {
         file_.close();
     }
