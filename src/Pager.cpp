@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <string.h>
 
 using namespace std;
 
@@ -14,6 +15,34 @@ using namespace std;
 class Page;
 ostream& operator<<(ostream& os, Page& pg);
 istream& operator>>(istream& is, Page& pg);
+
+template<typename T> class Data {
+    T data;  
+    public:
+    virtual T getData() {
+        return this->data;
+    }
+    virtual void setData(T data) {
+        this->data = data;
+    }
+};
+
+class Int: Data<int> {};
+class Long: Data<long> {};
+class Double: Data<double> {};
+class String: Data<char*> {
+    char* data;
+    public:
+    String() {
+        this->data = new char[256];
+    }
+    void setData(char* data) {
+        strncpy(this->data, data, 256);
+    }
+    ~String() {
+        delete[] this->data;
+    }
+};
 
 enum class PgType {
     Leaf,
