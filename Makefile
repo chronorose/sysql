@@ -25,7 +25,7 @@ $(parser): $(test)
 	$(CC) src/$(parser).cpp -o build/parser -fsanitize=address
 	./build/parser
 
-$(engine): $(test)
+$(engine): $(test) 
 	$(CC) src/$(engine).cpp -o build/engine -fsanitize=address
 	./build/engine
 

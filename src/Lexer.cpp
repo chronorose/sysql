@@ -32,6 +32,12 @@ string LexemeTypeToString(LexemeType type) {
         case LexemeType::String:
             return "String";
 
+        case LexemeType::And:
+            return "And";
+        case LexemeType::Or:
+            return "Or";
+        case LexemeType::Where:
+            return "Where";
 
         case LexemeType::None:
             return "None";
