@@ -43,21 +43,21 @@ class Parser {
                 case LexemeType::Equal:
                     current->condition.op = Operator::Equal;
                     break;
-                case LexemeType::NotEqual:
-                    current->condition.op = Operator::NotEqual;
-                    break;
-                case LexemeType::Greater:
-                    current->condition.op = Operator::Greater;
-                    break;
-                case LexemeType::Less:
-                    current->condition.op = Operator::Less;
-                    break;
-                case LexemeType::GreaterOrEqual:
-                    current->condition.op = Operator::GreaterOrEqual;
-                    break;
-                case LexemeType::LessOrEqual:
-                    current->condition.op = Operator::LessOrEqual;
-                    break;
+                // case LexemeType::NotEqual:
+                //     current->condition.op = Operator::NotEqual;
+                //     break;
+                // case LexemeType::Greater:
+                //     current->condition.op = Operator::Greater;
+                //     break;
+                // case LexemeType::Less:
+                //     current->condition.op = Operator::Less;
+                //     break;
+                // case LexemeType::GreaterOrEqual:
+                //     current->condition.op = Operator::GreaterOrEqual;
+                //     break;
+                // case LexemeType::LessOrEqual:
+                //     current->condition.op = Operator::LessOrEqual;
+                //     break;
                 default:
                     throw ParseException();
             }
@@ -301,12 +301,13 @@ class Parser {
     Parsed parse(string query) {
         Lexer lexer(query);
         lexemes_ = lexer.lex();
+        lexemes_.pop_back();
         lexer.printLexemes();
         i = 0;
         len_ = lexemes_.size();
         Parsed parsed = Parsed();
         switch (lexemes_[i++].type) {
-            case LexemeType::Using:
+            case LexemeType::Use:
                 parsed.command = parseUse();
                 parsed.type = CommandType::Use;
                 break;
@@ -332,11 +333,11 @@ class Parser {
         return parsed;
     }
 };
-/*
+
 int main() {
     string str = readQueryFromFile("kal");
     Parser parser = Parser();
     Parsed parsed = parser.parse(str);
     cout << (int) parsed.type << "\n";
 }
-*/
+
