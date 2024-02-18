@@ -1,5 +1,6 @@
+#pragma once
 #include "Pager.cpp"
-#include "Parser.cpp"
+#include "Query.cpp"
 #include <map>
 #include <filesystem>
 #include <dirent.h>
@@ -70,6 +71,11 @@ int fileCount(fs::path path) {
             Database db(dbName);
             db.create(rootDir_);
         }
+        void evalQuery(Parsed token) {
+            switch(token.type) {
+                case
+            }
+        }
         void connectDb(string dbName) {
             if (!fs::directory_entry(rootDir_.path() / dbName).exists()) {
                 cout << "Couldn't connect to \"" << dbName << "\", database doesn't exist" << endl;
@@ -100,7 +106,7 @@ int fileCount(fs::path path) {
                         cout << ((currentDb_ == nullptr) ? "" : "(" + currentDb_->getDbName() + ")") <<  "   ... > ";
                     }
                 }
-                vector<Parsed> p = parser.parse(line.substr(0, line.length() - 2));
+                Parsed p = parser.parse(line.substr(0, line.length() - 2));
             }
         }
         ~Engine() {
