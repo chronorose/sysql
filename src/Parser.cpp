@@ -189,7 +189,26 @@ class Parser {
 
     Command parseDrop() {
       Drop drop = Drop();
-
+      if (i >= len_) {
+        throw ParseException();
+      }
+      switch (lexemes_[i++].type) {
+        case LexemeType::Database:
+          drop.object = Object::DataBase;
+          break;
+        case LexemeType::Table:
+          drop.object = Object::Table;
+          break;
+        default:
+          throw ParseException();
+      }
+      if (i < len_ && lexemes_[i].type == LexemeType::Identifier) {
+        drop.name = lexemes_[i++].value;
+      } else {
+        throw ParseException();
+      }
+      cheackSemicolon(i++);
+      return drop;
     }
 
   public:
@@ -224,6 +243,10 @@ class Parser {
                     parsed.command = parseCreate();
                     parsed.type = CommandType::Create;
                     break;
+                case LexemeType::Drop:
+                    parsed.command = parseDrop();
+                    parsed.type = CommandType::Drop;
+                    break;
                 default:
                     throw ParseException();
             }
@@ -232,7 +255,7 @@ class Parser {
         return parseds;
     }
 };
-
+//
 // int main() {
 //     string str = readQueryFromFile("kal");
 //     Lexer lexer = Lexer(str);
