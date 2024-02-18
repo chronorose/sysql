@@ -291,7 +291,7 @@ class Parser {
         while (i < len_ && lexemes_[i].type != LexemeType::Eof) {
             Parsed parsed = Parsed();
             switch (lexemes_[i++].type) {
-                case LexemeType::Using:
+                case LexemeType::Use:
                   parsed.command = parseUse();
                   parsed.type = CommandType::Use;
                   break;
@@ -319,11 +319,3 @@ class Parser {
         return parseds;
     }
 };
-
-int main() {
-    string str = readQueryFromFile("kal");
-    Lexer lexer = Lexer(str);
-    Parser parser = Parser(lexer);
-    vector<Parsed> parsed = parser.parse();
-    cout << parsed.size() << "\n";
-}

@@ -421,7 +421,3 @@ class Pager {
         file_.close();
     }
 };
-
-int main() {
-    return 0;
-}
