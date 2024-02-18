@@ -1,5 +1,6 @@
 #include "Command.cpp"
 #include "Lexer.cpp"
+#include "Lexer.hpp"
 #include <exception>
 #include <pstl/glue_execution_defs.h>
 #include <string>
@@ -79,7 +80,7 @@ private:
           lexemes_[i++].type == LexemeType::LeftParen)) {
       throw ParseException();
     }
-    int j = 0;
+    size_t j = 0;
     for (; i + 1 < len_ && (lexemes_[i].type == LexemeType::String || lexemes_[i].type == LexemeType::Number); i++) {
       if (j >= insert.records.size()) {
         throw ParseException();
@@ -100,6 +101,7 @@ private:
   Command parseCreate() {
     Create create = Create();
     int i = 1;
+    int j = 0;
     if (i >= len_) {
       throw ParseException();
     }
@@ -122,10 +124,8 @@ private:
       if (!(i < len_ && lexemes_[i++].type == LexemeType::LeftParen)) {
         throw ParseException();
       }
-      int j = 0;
-      for (; i + 2 < len_ && lexemes_[i].type == LexemeType::Identifier && lexemes_[i + 1].type == LexemeType::Comma; i++) {
+      for (; i + 2 < len_ && lexemes_[i].type == LexemeType::Identifier; i++) {
         auto lexemeName = lexemes_[i++];
-        i++;
         auto lexemeType = lexemes_[i++];
         Field field;
         switch (lexemeType.type) {
@@ -147,7 +147,7 @@ private:
         field.name = lexemeName.value;
         create.fields.push_back(field);
         j++;
-        while (i + 2 < len_ && lexemes_[i++].type == LexemeType::Comma) {
+        while (i + 1 < len_ && lexemes_[i++].type == LexemeType::Comma) {
           switch (lexemes_[i++].type) {
             case LexemeType::PrimaryKey:
               create.fields[j - 1].options.push_back(Option::PrimaryKey);
@@ -155,13 +155,19 @@ private:
             case LexemeType::Unique:
               create.fields[j - 1].options.push_back(Option::Unique);
               break;
+            case LexemeType::AutoIncrement:
+              create.fields[j - 1].options.push_back(Option::AutoIncrement);
+              break;
             default:
               throw ParseException();
           }
-          if (lexemes_[i].type == LexemeType::Semicolon) {
+          if (lexemes_[i].type == LexemeType::Comma) {
             i++;
             break;
           }
+        }
+        if (lexemes_[i].type != LexemeType::Comma) {
+          break;
         }
       }
       if (!(i < len_ && lexemes_[i++].type == LexemeType::RightParen)) {
@@ -180,6 +186,7 @@ public:
     lexer.lex();
     lexemes_ = lexer.lexemes;
     len_ = lexemes_.size();
+    lexer.printLexemes();
   }
 
   Parsed parse() {
@@ -207,10 +214,10 @@ public:
   }
 };
 
-// int main() {
-//   string str = readQueryFromFile("kal");
-//   Lexer lexer = Lexer(str);
-//   Parser parser = Parser(lexer);
-//   Parsed parsed = parser.parse();
-//   cout << (int)parsed.type << "\n";
-// }
+int main() {
+  string str = readQueryFromFile("kal");
+  Lexer lexer = Lexer(str);
+  Parser parser = Parser(lexer);
+  Parsed parsed = parser.parse();
+  cout << (int)parsed.type << "\n";
+}
