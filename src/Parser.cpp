@@ -1,5 +1,5 @@
 #include "Command.cpp"
-#include "Lexer.hpp"
+#include "Lexer.cpp"
 #include <exception>
 #include <pstl/glue_execution_defs.h>
 #include <string>
