@@ -23,7 +23,7 @@ class Parser {
   private:
     vector<Lexeme> lexemes_;
     int len_;
-    int i;
+    int i = 0;
 
     void checkEnd() {
         if (i < len_) {
@@ -277,26 +277,25 @@ class Parser {
         checkEnd();
         return drop;
     }
-    Command parseList() {
-
-    }
   public:
-    Parser(Lexer lexer) {
-        // lexer.lex();
-        lexemes_ = lexer.lex();
-        len_ = lexemes_.size();
-        lexer.printLexemes();
-        i = 0;
-    }
+    // Parser(Lexer lexer) {
+    //     // lexer.lex();
+    //     lexemes_ = lexer.lex();
+    //     len_ = lexemes_.size();
+    //     lexer.printLexemes();
+    //     i = 0;
+    // }
+    //
+    // Parser(string query) {
+    //     // lexer.lex();
+    //     Lexer lexer(query);
+    //     lexemes_ = lexer.lex();
+    //     len_ = lexemes_.size();
+    //     lexer.printLexemes();
+    //     i = 0;
+    // }
 
-    Parser(string query) {
-        // lexer.lex();
-        Lexer lexer(query);
-        lexemes_ = lexer.lex();
-        len_ = lexemes_.size();
-        lexer.printLexemes();
-        i = 0;
-    }
+    Parser() {}
 
     Parsed parse(string query) {
         Lexer lexer(query);
