@@ -1,7 +1,4 @@
-#pragma once
-#include "Query.cpp"
-#include <map>
-#include <filesystem>
+#include "Parser.cpp"
 #include <dirent.h>
 #include <filesystem>
 #include <map>
@@ -53,6 +50,7 @@ class Database {
             cout << "Database \"" << dbName_ << "\" successfully deleted" << endl;
         }
     }
+
     string getDbName() {
         return dbName_;
     }
@@ -87,16 +85,18 @@ class Engine {
         Database db(dbName);
         db.drop(rootDir_);
     }
+
     void createDb(string dbName) {
         Database db(dbName);
         db.create(rootDir_);
     }
-        void connectDb(string dbName) {
-            if (!fs::directory_entry(rootDir_.path() / dbName).exists()) {
-                cout << "Couldn't connect to \"" << dbName << "\", database doesn't exist" << endl;
-                delete currentDb_;
-                return;
-            }
+
+    void connectDb(string dbName) {
+        if (!fs::directory_entry(rootDir_.path() / dbName).exists()) {
+            cout << "Couldn't connect to \"" << dbName << "\", database doesn't exist" << endl;
+            delete currentDb_;
+            return;
+        }
         delete currentDb_;
         currentDb_ = new Database(dbName);
         return;
@@ -153,10 +153,8 @@ class Engine {
             try {
                 Parsed tkn = parser.parse(line.substr(0, line.length() - 2));
                 evalQuery(&tkn);
-            }
-            catch (ParseException& e) {
+            } catch (ParseException& e) {
                 cout << e.what();
-                Parsed p = parser.parse(line.substr(0, line.length() - 2));
             }
         }
     }
