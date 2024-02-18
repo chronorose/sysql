@@ -1,5 +1,4 @@
 #include "Pager.cpp"
-#include "Query.cpp"
 #include "Parser.cpp"
 #include <dirent.h>
 #include <filesystem>

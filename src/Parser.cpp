@@ -297,11 +297,15 @@ class Parser {
 
     Parser() {}
 
+// #define PARSE_DEBUG
+
     Parsed parse(string query) {
         Lexer lexer(query);
         lexemes_ = lexer.lex();
         lexemes_.pop_back();
+#ifdef PARSE_DEBUG
         lexer.printLexemes();
+#endif
         i = 0;
         len_ = lexemes_.size();
         Parsed parsed = Parsed();

@@ -4,7 +4,7 @@
 
 using namespace std;
 
-enum class Object { DataBase, Table };
+enum class Object { DataBase = 2, Table };
 enum class Type { Int, Long, Double, String };
 enum class Option { PrimaryKey, Unique, AutoIncrement };
 enum class Operator { Equal, NotEqual, Greater, Less, GreaterOrEqual, LessOrEqual, And, Or };
@@ -48,6 +48,9 @@ class Command {
     Object getObject() {
       return {};
     }
+    string getName() {
+      return {};
+    }
 };
 
 class List : public Command {
@@ -86,6 +89,9 @@ class Create : public Command {
 
     Object getObject() {
       return this->object;
+    }
+    string getName() {
+      return this->name;
     }
 
     string getMap() {
