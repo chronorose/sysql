@@ -7,6 +7,7 @@ using namespace std;
 enum class Object { DataBase, Table };
 enum class Type { Int, Long, Double, String };
 enum class Option { PrimaryKey, Unique, AutoIncrement };
+enum class Operator { Equal, NotEqual, Greater, Less, GreaterOrEqual, LessOrEqual, And, Or };
 
 struct Field {
     Type type;
@@ -17,6 +18,26 @@ struct Field {
 struct Record {
     string name;
     string value;
+};
+
+class Condition {
+  public:
+    string field;
+    Operator op;
+    string value;
+    Type type;
+};
+
+class Node {
+  public:
+    Condition condition;
+    Node* next;
+    Operator op;
+};
+
+class ConditionTree {
+  public:
+    Node head;
 };
 
 class Command {
@@ -65,6 +86,7 @@ class Select : public Command {
   public:
     string table;
     vector<string> selectedFields;
+    Node condition;
 
     map<string, string> getMap() {
         return {{"table", table}, {"selectedFields", fieldsToString()}};
