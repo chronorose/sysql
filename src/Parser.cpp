@@ -332,10 +332,11 @@ class Parser {
         return parsed;
     }
 };
-
+/*
 int main() {
     string str = readQueryFromFile("kal");
     Parser parser = Parser();
     Parsed parsed = parser.parse(str);
     cout << (int) parsed.type << "\n";
 }
+*/
