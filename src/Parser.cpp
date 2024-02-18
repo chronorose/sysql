@@ -1,5 +1,6 @@
 #include "Command.cpp"
 #include "Lexer.cpp"
+#include "Lexer.hpp"
 #include <exception>
 #include <pstl/glue_execution_defs.h>
 #include <string>
@@ -8,7 +9,7 @@
 
 using namespace std;
 
-enum class CommandType { Use, Select, Insert, Create, Drop };
+enum class CommandType { Use, Select, Insert, Create, Drop, List };
 
 class ParseException : exception {};
 
@@ -276,7 +277,9 @@ class Parser {
         checkEnd();
         return drop;
     }
+    Command parseList() {
 
+    }
   public:
     Parser(Lexer lexer) {
         // lexer.lex();
@@ -293,9 +296,6 @@ class Parser {
         len_ = lexemes_.size();
         lexer.printLexemes();
         i = 0;
-    }
-
-    Parser() {
     }
 
     Parsed parse(string query) {
@@ -326,6 +326,16 @@ class Parser {
             case LexemeType::Drop:
                 parsed.command = parseDrop();
                 parsed.type = CommandType::Drop;
+                break;
+            case LexemeType::ListTables:
+                parsed.command = List(Object::Table);
+                parsed.type = CommandType::List;
+                checkEnd();
+                break;
+            case LexemeType::ListDatabases:
+                parsed.command = List(Object::DataBase);
+                parsed.type = CommandType::List;
+                checkEnd();
                 break;
             default:
                 throw ParseException();
