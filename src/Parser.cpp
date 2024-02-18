@@ -26,10 +26,56 @@ class Parser {
     int len_;
     int i;
 
-    void cheackSemicolon(int index) {
-        if (lexemes_[index].type != LexemeType::Semicolon) {
+    void checkEnd() {
+        if (i < len_) {
             throw ParseException();
         }
+    }
+    Node parseCondition() {
+      Node tree = Node();
+      Node* current = &tree;
+      for (; i + 2 < len_ ;) {
+        if (lexemes_[i].type == LexemeType::Identifier) {
+          current->condition.field = lexemes_[i++].value;
+        } else {
+          throw ParseException();
+        }
+        switch (lexemes_[i++].type) {
+          case LexemeType::Equal:
+            current->condition.op = Operator::Equal;
+            break;
+          default:
+            throw ParseException();
+        }
+        switch (lexemes_[i].type) {
+          case LexemeType::String:
+            current->condition.type = Type::String;
+            current->condition.value = lexemes_[i++].value;
+            break;
+          case LexemeType::Number:
+            current->condition.type = Type::Int;
+            current->condition.value = lexemes_[i++].value;
+            break;
+          default:
+            throw ParseException();
+        }
+        if (i >= len_) {
+          return tree;
+        }
+        switch (lexemes_[i++].type) {
+          case LexemeType::And:
+            current->op = Operator::And;
+            break;
+          case LexemeType::Or:
+            current->op = Operator::Or;
+            break;
+          default:
+            throw ParseException();
+        }
+        current->next = new Node();
+        current = current->next;
+      }
+      throw ParseException();
     }
 
     Command parseSelect() {
@@ -53,7 +99,11 @@ class Parser {
         } else {
             throw ParseException();
         }
-        cheackSemicolon(i++);
+        if (i < len_ && lexemes_[i++].type == LexemeType::Where) {
+          select.condition = parseCondition();
+        } else {
+          checkEnd();
+        }
         return select;
     }
 
@@ -96,7 +146,7 @@ class Parser {
               lexemes_[i++].type == LexemeType::RightParen)) {
             throw ParseException();
         }
-        cheackSemicolon(i++);
+        checkEnd();
         return insert;
     }
 
@@ -172,7 +222,7 @@ class Parser {
             default:
                 throw ParseException();
         }
-        cheackSemicolon(i++);
+        checkEnd();
         return create;
     }
 
@@ -183,7 +233,7 @@ class Parser {
       }
       use.name = lexemes_[i + 1].value;
       i += 2;
-      cheackSemicolon(i++);
+      checkEnd();
       return use;
     }
 
@@ -207,24 +257,38 @@ class Parser {
       } else {
         throw ParseException();
       }
-      cheackSemicolon(i++);
+      checkEnd();
       return drop;
     }
 
   public:
     Parser(Lexer lexer) {
-        lexer.lex();
-        lexemes_ = lexer.lexemes;
+        // lexer.lex();
+        lexemes_ = lexer.lex();
         len_ = lexemes_.size();
         lexer.printLexemes();
         i = 0;
     }
+    Parser(string query) {
+        // lexer.lex();
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        len_ = lexemes_.size();
+        lexer.printLexemes();
+        i = 0;
+    }
+    Parser() {
+        i = 0;
+    }
 
-    vector<Parsed> parse() {
+    vector<Parsed> parse(string query) {
+        Lexer lexer(query);
+        lexemes_ = lexer.lex();
+        lexer.printLexemes();
+        i = 0;
+        len_ = lexemes_.size();
         vector<Parsed> parseds;
         while (i < len_ && lexemes_[i].type != LexemeType::Eof) {
-            cout << i << "\n";
-            cout.flush();
             Parsed parsed = Parsed();
             switch (lexemes_[i++].type) {
                 case LexemeType::Using:
@@ -255,11 +319,11 @@ class Parser {
         return parseds;
     }
 };
-//
-// int main() {
-//     string str = readQueryFromFile("kal");
-//     Lexer lexer = Lexer(str);
-//     Parser parser = Parser(lexer);
-//     vector<Parsed> parsed = parser.parse();
-//     cout << parsed.size() << "\n";
-// }
+
+int main() {
+    string str = readQueryFromFile("kal");
+    Lexer lexer = Lexer(str);
+    Parser parser = Parser(lexer);
+    vector<Parsed> parsed = parser.parse();
+    cout << parsed.size() << "\n";
+}
