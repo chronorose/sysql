@@ -36,19 +36,25 @@ template<typename T> class Data: public DBData {
 class Int: public Data<int> {
     int data;
     public:
-    void setData(int data);
+    void setData(int data) {
+        this->data = data;
+    }
     int getData();
 };
 class Long: public Data<long> {
     long data;
     public:
-    void setData(long data);
+    void setData(long data) {
+        this->data = data;
+    }
     long getData();
 };
 class Double: public Data<double> {
     double data;
     public:
-    void setData(double data);
+    void setData(double data) {
+        this->data = data;
+    }
     double getData();
 };
 class String: public Data<char*> {
@@ -415,3 +421,7 @@ class Pager {
         file_.close();
     }
 };
+
+int main() {
+    return 0;
+}
