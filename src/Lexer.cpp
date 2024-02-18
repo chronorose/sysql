@@ -1,5 +1,4 @@
 #include "Lexer.hpp"
-#include <gtest/gtest.h>
 
 
 
@@ -232,16 +231,4 @@ string readQueryFromFile(string filePath) {
     strStream << fs.rdbuf();
     fs.close();
     return strStream.str();
-}
-
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest();
-    int res = RUN_ALL_TESTS();
-    // string filePath = argc > 1 ? argv[1] : "src/queries.txt";
-    // string query = readQueryFromFile(filePath);
-    // Lexer lexer(query);
-    // lexer.lex();
-    // lexer.printLexemes();
-    return 0;
 }

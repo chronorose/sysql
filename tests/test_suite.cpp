@@ -1,5 +1,4 @@
-#include "../src/Lexer.cpp"
-#include "../src/parser.cpp"
+#include "../src/Parser.cpp"
 #include <gtest/gtest.h>
 #include <string>
 
