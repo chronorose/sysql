@@ -36,6 +36,9 @@ enum class LexemeType {
     // Modificators
     Unique, AutoIncrement,
 
+    // Starts with .
+    ListDatabases, ListTables,
+
     Eof, None,
 };
 
@@ -73,5 +76,8 @@ map<string, LexemeType> keywords {
 
     { "and", LexemeType::And },
     { "or", LexemeType::Or },
+
+    { ".databases", LexemeType::ListDatabases },
+    { ".tables", LexemeType::ListTables },
 
 };

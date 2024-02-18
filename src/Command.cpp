@@ -47,6 +47,14 @@ class Command {
     }
 };
 
+class List : public Command {
+  public:
+    Object object;
+    List (Object object) {
+      this->object = object;
+    }
+};
+
 class Use : public Command {
   public:
     string name;
