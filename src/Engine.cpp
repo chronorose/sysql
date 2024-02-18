@@ -1,4 +1,5 @@
 #include "Pager.cpp"
+#include "Parser.cpp"
 #include <map>
 #include <filesystem>
 #include <dirent.h>
@@ -83,21 +84,35 @@ int fileCount(fs::path path) {
             Database db(dbName);
             db.drop(rootDir_);
         }
+        void run() {
+            Lexer lexer = {};
+            Parser parser = {};
+            for ( ;; ) {
+                string line {};
+                cout << "sysql ~> ";
+                char c;
+                while (cin.get(c)) {
+                    line.push_back(c);
+                    if (line.length() > 1 && c == '\n' && line.at(line.length() - 2) == ';') {
+                        break;
+                    }
+                    if (c == '\n') {
+                        cout << ((currentDb_ == nullptr) ? "" : "(" + currentDb_->getDbName() + ")") <<  "   ... > ";
+                    }
+                }
+                vector<Parsed> p = parser.parse(line.substr(0, line.length() - 2));
+            }
+        }
         ~Engine() {
             delete currentDb_;
         }
     };
 }
 
+
 int main() {
     engine::Engine *engine = new engine::Engine();
-    // engine->createDb("first_db");
-    // engine->createDb("second_db");
-    // engine->createDb("third_db");
-    // engine->dropDb("first_db");
-    engine->createDb("first_db");
-    engine->dropDb("first_db");
-    engine->dropDb("first_db");
+    engine->run();
     delete engine;
     return 0;
 }
