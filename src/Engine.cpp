@@ -1,6 +1,7 @@
 #include "Pager.cpp"
 #include <map>
 #include <filesystem>
+#include <gtest/gtest.h>
 namespace engine {
     namespace fs = std::filesystem;
     class Table {
@@ -30,6 +31,7 @@ namespace engine {
         fs::directory_entry rootDir;
         Database *currentDb;
         public:
+        fs::directory_entry getRootDir() { return rootDir; }
         Engine() {
             rootDir = fs::directory_entry(fs::current_path() / defaultSysqlFolderName); 
             if (!rootDir.exists())
@@ -51,9 +53,11 @@ namespace engine {
     };
 }
 
-int main() {
-    engine::Engine *engine = new engine::Engine();
-    engine->createDb("first_db");
-    delete engine;
-    return 0;
-}
+// int main() {
+//     engine::Engine *engine = new engine::Engine();
+//     engine->createDb("first_db");
+//     engine->createDb("second_db");
+//     engine->createDb("third_db");
+//     delete engine;
+//     return 0;
+// }

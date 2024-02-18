@@ -187,11 +187,3 @@ public:
     return parsed;
   }
 };
-
-int main() {
-  string str = readQueryFromFile("kal");
-  Lexer lexer = Lexer(str);
-  Parser parser = Parser(lexer);
-  Parsed parsed = parser.parse();
-  cout << (int)parsed.type << "\n";
-}
