@@ -16,14 +16,52 @@ class Page;
 ostream& operator<<(ostream& os, Page& pg);
 istream& operator>>(istream& is, Page& pg);
 
-class DBData {
-    public:
-    int getData();
-    void setData();
-};
+// class DBData {
+//     int data;
+//     public:
+//     int getData() {
+//         return this->data;
+//     }
+//     void setData();
+// };
 
-template<typename T> class Data: public DBData {
-    T data;  
+// template<typename T> class Data: public DBData {
+//     T data;  
+//     public:
+//     T getData() {
+//         return this->data;
+//     }
+//     void setData(T data) {
+//         this->data = data;
+//     }
+// };
+
+// class Int: public Data<int> {
+//     int data;
+//     public:
+//     void setData(int data) {
+//         this->data = data;
+//     }
+//     int getData();
+// };
+// class Long: public Data<long> {
+//     long data;
+//     public:
+//     void setData(long data) {
+//         this->data = data;
+//     }
+//     long getData();
+// };
+// class Double: public Data<double> {
+//     double data;
+//     public:
+//     void setData(double data) {
+//         this->data = data;
+//     }
+//     double getData();
+// };
+template<typename T> class DataStand {
+    T data;
     public:
     T getData() {
         return this->data;
@@ -33,46 +71,22 @@ template<typename T> class Data: public DBData {
     }
 };
 
-class Int: public Data<int> {
-    int data;
-    public:
-    void setData(int data) {
-        this->data = data;
-    }
-    int getData();
-};
-class Long: public Data<long> {
-    long data;
-    public:
-    void setData(long data) {
-        this->data = data;
-    }
-    long getData();
-};
-class Double: public Data<double> {
-    double data;
-    public:
-    void setData(double data) {
-        this->data = data;
-    }
-    double getData();
-};
-class String: public Data<char*> {
-    char* data;
-    public:
-    String() {
-        this->data = new char[256];
-    }
-    void setData(char* data) {
-        strncpy(this->data, data, 256);
-    }
-    char* getData() {
-        return this->data;
-    }
-    ~String() {
-        delete[] this->data;
-    }
-};
+// class String: public Data<char*> {
+//     char* data;
+//     public:
+//     String() {
+//         this->data = new char[256];
+//     }
+//     void setData(char* data) {
+//         strncpy(this->data, data, 256);
+//     }
+//     char* getData() {
+//         return this->data;
+//     }
+//     ~String() {
+//         delete[] this->data;
+//     }
+// };
 
 enum class PgType {
     Leaf,
@@ -80,7 +94,7 @@ enum class PgType {
 };
 
 enum class ColumnType {
-    Int, Long, Double, String
+    Int = 4, Long, Double, String
 };
 
 class Buffer {
@@ -111,20 +125,22 @@ class TableHeader {
     long vecSize;
     long rowNum;
     vector<ColumnType>* columns;
-    TableHeader(vector<ColumnType>& columns) {
-        *this->columns = columns;
-        this->vecSize = this->columns->size();
-        this->rowNum = 0;
-    }
-    TableHeader(vector<ColumnType>& columns, long rowNum) {
-        this->columns = &columns;
-        this->vecSize = this->columns->size();
-        this->rowNum = rowNum;
-    }
     TableHeader() {
         this->columns = new vector<ColumnType>;
         this->vecSize = 0;
         this->rowNum = 0;
+    }
+    TableHeader(vector<ColumnType>* columns) {
+        this->columns = new vector<ColumnType>;
+        *this->columns = *columns;
+        this->vecSize = this->columns->size();
+        this->rowNum = 0;
+    }
+    TableHeader(vector<ColumnType>* columns, long rowNum) {
+        this->columns = new vector<ColumnType>;
+        *this->columns = *columns;
+        this->vecSize = this->columns->size();
+        this->rowNum = rowNum;
     }
     ~TableHeader() {
         delete this->columns;
@@ -133,7 +149,7 @@ class TableHeader {
 
 class Row {
     public:
-    vector<DBData>* rowData;
+    vector<DataStand<>>* rowData;
     vector<ColumnType>* typeData;
     Row(vector<ColumnType>* types) {
         this->rowData = new vector<DBData>;
@@ -160,19 +176,21 @@ template<typename T> void writeBytes(ostream& os, DBData val) {
 template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
     auto iter { vec->begin() };
     while (iter != vec->end()) {
-        writeBytes(os, iter);
+        writeBytes(os, *iter);
+        iter++;
     }
 }
 
-ostream& operator<<(ostream& os, Row row) {
-    auto iter { row.rowData->begin() };
-    while (iter != row.rowData->end()) {
+ostream& operator<<(ostream& os, Row* row) {
+    auto iter { row->rowData->begin() };
+    while (iter != row->rowData->end()) {
         writeBytes(os, iter); 
+        iter++;
     }
     return os;
 }
 
-ostream& operator<<(ostream& os, TableHeader thdr) {
+ostream& operator<<(ostream& os, TableHeader& thdr) {
     os.seekp(SYSQL_HDR_SIZE);
     writeBytes(os, thdr.vecSize);
     writeBytes(os, thdr.rowNum);
@@ -237,6 +255,7 @@ istream& operator>>(istream& is, Row& row) {
             String val_string {};
             val_string.setData(readBytes<char*>(is, buf.buffer, 256));
         }
+        iter++;
     }
     return is;
 }
@@ -389,12 +408,19 @@ public:
         return row;
     } 
 
-    void writeRow(size_t pos, Row row) {
-        open_write();
+    void writeRow(size_t pos, Row* row, vector<ColumnType>* vec) {
+        // cout << "ok";
         TableHeader thdr = getTHdr();
+        open_write();
         file_.seekp(thdr.vecSize * (pos + 1));
         file_ << row;
         file_.close();
+        open_read();
+        Row row1(vec);
+        file_ >> row1;
+        auto i = row1.rowData->at(1);
+        cout << i.getData();
+       // cout << row1.rowData->at(1).getData();
     }
 
 
@@ -418,11 +444,37 @@ public:
 
     void createTable(string dbName, vector<ColumnType>& columnTypes) {
         redirect(dbName);
-        write_initial();
-        TableHeader tblhdr(columnTypes);
+        open_write();
+        TableHeader tblhdr(&columnTypes);
+        file_ << tblhdr;
+        file_.close();
     }
 
     ~Pager() {
         file_.close();
     }
 };
+
+int main() {
+    Pager pager("kek");
+    vector<ColumnType> vec;
+    vec.push_back(ColumnType::Int);
+    vec.push_back(ColumnType::Int);
+    vec.push_back(ColumnType::Int);
+    pager.createTable("kek", vec);
+    Row* row = new Row(&vec);
+    // Row row(&vec);
+    Int i;
+    i.setData(32);
+    row->rowData->push_back(i);
+    Int r;
+    i.setData(64);
+    row->rowData->push_back(r);
+    Int z;
+    i.setData(123);
+    row->rowData->push_back(z);
+    pager.writeRow(1, row, &vec);
+    // Row rowing(&vec);
+    // rowing = pager.readRow(1);
+    // cout << rowing << endl;
+}

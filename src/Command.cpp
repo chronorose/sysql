@@ -42,15 +42,10 @@ class ConditionTree {
 
 class Command {
   public:
-    string getMap() {
-        return {};
-    }
-    Object getObject() {
-      return {};
-    }
-    string getName() {
-      return {};
-    }
+    Object object;
+    string getMap();
+    Object getObject();
+    string getName(); 
 };
 
 class List : public Command {
@@ -114,9 +109,7 @@ class Select : public Command {
     vector<string> selectedFields;
     Node condition;
 
-    Object getObject() {
-      return {};
-    }
+    Object getObject();
 
     string getMap() {
         return "SELECT: table " + table + "i selectedFielda s" +  fieldsToString();
@@ -137,9 +130,7 @@ class Insert : public Command {
     string table;
     vector<Record> records;
 
-    Object getObject() {
-      return {};
-    }
+    Object getObject();
 
     string getMap() {
         return "INSERT: table " + table + " records " + recordsToString();
