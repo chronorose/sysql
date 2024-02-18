@@ -369,6 +369,10 @@ class Pager {
 
 public:
 
+    Pager() {
+        this->fileName_ = nullptr;
+    }
+
     Pager(string fileName) {
         this->fileName_ = fileName;
     }
@@ -446,6 +450,9 @@ public:
         redirect(dbName);
         open_write();
         TableHeader tblhdr(&columnTypes);
+        write_initial();
+        open_write();
+        TableHeader tblhdr(columnTypes);
         file_ << tblhdr;
         file_.close();
     }
