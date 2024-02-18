@@ -350,6 +350,10 @@ class Pager {
 
 public:
 
+    Pager() {
+        this->fileName_ = nullptr;
+    }
+
     Pager(string fileName) {
         this->fileName_ = fileName;
     }
@@ -419,7 +423,10 @@ public:
     void createTable(string dbName, vector<ColumnType>& columnTypes) {
         redirect(dbName);
         write_initial();
+        open_write();
         TableHeader tblhdr(columnTypes);
+        file_ << tblhdr;
+        file_.close();
     }
 
     ~Pager() {
