@@ -34,6 +34,21 @@ class Int: public DBData {
     }
 };
 
+class Long: public DBData {
+    public:
+    long data;
+    Long(long data) {
+        this->data = data;
+    }
+};
+
+class Double: public DBData {
+    public:
+    double data;
+    Double(double data) {
+        this->data = data;
+    }
+};
 // template<typename T> class Data: public DBData {
 //     T data;  
 //     public:
@@ -122,13 +137,15 @@ class TableHeader {
     long vecSize;
     long rowNum;
     vector<ColumnType>* columns;
-    TableHeader(vector<ColumnType>& columns) {
-        *this->columns = columns;
+    TableHeader(vector<ColumnType>* columns) {
+        this->columns = new vector<ColumnType>;
+        *this->columns = *columns;
         this->vecSize = this->columns->size();
         this->rowNum = 0;
     }
-    TableHeader(vector<ColumnType>& columns, long rowNum) {
-        this->columns = &columns;
+    TableHeader(vector<ColumnType>* columns, long rowNum) {
+        this->columns = new vector<ColumnType>;
+        *this->columns = *columns;
         this->vecSize = this->columns->size();
         this->rowNum = rowNum;
     }
@@ -148,10 +165,12 @@ class Row {
     vector<ColumnType>* typeData;
     Row(vector<ColumnType>* types) {
         this->rowData = new vector<DBData*>;
-        this->typeData = types;
+        this->typeData = new vector<ColumnType>;
+        *this->typeData = *types;
     }        
     ~Row() {
         delete this->rowData;
+        delete this->typeData;
     }
 };
 
@@ -172,22 +191,35 @@ template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
     auto iter { vec->begin() };
     while (iter != vec->end()) {
         writeBytes(os, iter);
+        iter++;
     }
 }
 
 ostream& operator<<(ostream& os, Row* row) {
+    Int* int_val = new Int(0);
+    Double* double_val = new Double(0);
+    Long* long_val = new Long(0);
     for (size_t i = 0; i < row->rowData->size(); i++) {
-        writeBytes(os, row->rowData->at(i)->getData());
-        cout << row->rowData->at(i)->getData() << endl;
+        if (row->typeData->at(i) == ColumnType::Int) {
+            int_val = dynamic_cast<Int*>(row->rowData->at(i));
+            writeBytes(os, int_val->data);
+        }
+        if (row->typeData->at(i) == ColumnType::Double) {
+            double_val = dynamic_cast<Double*>(row->rowData->at(i));
+            writeBytes(os, double_val->data);
+        }
+        if (row->typeData->at(i) == ColumnType::Long) {
+            long_val = dynamic_cast<Long*>(row->rowData->at(i));
+            writeBytes(os, long_val->data);
+        }
     }
-    // while (iter != row->rowData->end()) {
-    //     writeBytes(os, iter);
-    //     iter++;
-    // }
+    delete int_val;
+    delete double_val;
+    delete long_val;
     return os;
 }
 
-ostream& operator<<(ostream& os, TableHeader thdr) {
+ostream& operator<<(ostream& os, TableHeader& thdr) {
     os.seekp(SYSQL_HDR_SIZE);
     writeBytes(os, thdr.vecSize);
     writeBytes(os, thdr.rowNum);
@@ -228,10 +260,19 @@ istream& operator>>(istream& is, Row& row) {
     bool str = false;
     while (iter != row.typeData->end()) {
         if (*iter.base() == ColumnType::Int) {
-            cout << readBytes<int>(is, buf.buffer);
-            // Int* val_int = new Int(readBytes<int>(is, buf.buffer));
-            // cout << val_int->getData();
-            // row.rowData->push_back(val_int);
+            int s = readBytes<int>(is, buf.buffer);
+            Int* n = new Int(s);
+            row.rowData->push_back(n);
+        }
+        if (*iter.base() == ColumnType::Long) {
+            long s = readBytes<long>(is, buf.buffer);
+            Long* n = new Long(s);
+            row.rowData->push_back(n);
+        }
+        if (*iter.base() == ColumnType::Double) {
+            double s = readBytes<double>(is, buf.buffer);
+            Double* n = new Double(s);
+            row.rowData->push_back(n);
         }
         // switch(*iter.base()) {
         //     case ColumnType::Int:
@@ -343,14 +384,6 @@ class Pager {
             file_.open(this->fileName_, ios::binary | fstream::out);
         }
     }
-    void write_initial() {
-        open_write();
-        writeBytes(file_, SYSQL_HDR);
-        FileHeader fhdr;
-        file_ << fhdr;
-        file_.close();
-    }
-
     long getRowOffset() {
         open_read();
         TableHeader thdr {};
@@ -365,23 +398,6 @@ class Pager {
         file_ << thdr;
         file_.close();
         return thdr;
-    }
-
-    Row readRow(size_t pos) {
-        open_read();
-        TableHeader thdr = getTHdr();
-        file_.seekp(thdr.vecSize * (pos + 1));
-        Row row(thdr.columns);
-        file_ >> row;
-        return row;
-    } 
-
-    void writeRow(size_t pos, Row row) {
-        open_write();
-        TableHeader thdr = getTHdr();
-        file_.seekp(thdr.vecSize * (pos + 1));
-        file_ << row;
-        file_.close();
     }
 
     FileHeader getHeader() {
@@ -429,26 +445,23 @@ class Pager {
     Row readRow(size_t pos) {
         open_read();
         TableHeader thdr = getTHdr();
-        file_.seekp(thdr.vecSize * (pos + 1));
+        file_.seekg(thdr.vecSize * (pos + 1));
         Row row(thdr.columns);
         file_ >> row;
         return row;
     } 
 
     void writeRow(size_t pos, Row* row, vector<ColumnType>* vec) {
-        // cout << "ok";
         TableHeader thdr = getTHdr();
         open_write();
         file_.seekp(thdr.vecSize * (pos + 1));
         file_ << row;
         file_.close();
-        open_read();
-        file_.seekg(thdr.vecSize * (pos + 1));
-        Row row1(vec);
-        file_ >> row1;
-        // auto i = row1.rowData->at(0);
-        // cout << i->getData();
-       // cout << row1.rowData->at(1).getData();
+        // open_read();
+        // file_ >> *row;
+        // Long* lng = new Long(0);
+        // lng = dynamic_cast<Long*>(row->rowData->at(0));
+        // cout << lng->data;
     }
 
     template<typename T> void writeToPage(Page& pg, T val) {
@@ -467,35 +480,37 @@ class Pager {
         delete[] buf;
         return hdrFromFile == hdr;
     }
-    void createDB(string dbName, vector<ColumnType>& columnTypes) {
+    void createTable(string dbName, vector<ColumnType>* columnTypes) {
         redirect(dbName);
+        open_write();
         write_initial();
         TableHeader tblhdr(columnTypes);
+        file_ << tblhdr;
+        file_.close();
     }
     ~Pager() {
         file_.close();
     }
 };
 
-int main() {
-    Pager pager("kek");
-    vector<ColumnType> vec;
-    vec.push_back(ColumnType::Int);
-    vec.push_back(ColumnType::Int);
-    vec.push_back(ColumnType::Int);
-    pager.createTable("kek", vec);
-    Row* row = new Row(&vec);
-    // Row row(&vec);
-    Int* i = new Int(32);
-    row->rowData->push_back(i);
-    Int* r = new Int(64);
-    r->data = 72;
-    row->rowData->push_back(r);
-    Int* z = new Int(72);
-    z->data = 72;
-    row->rowData->push_back(z);
-    pager.writeRow(1, row, &vec);
-    // Row rowing(&vec);
-    // rowing = pager.readRow(1);
-    // cout << rowing << endl;
-}
+// int main() {
+//     Pager pager("kek");
+//     vector<ColumnType> vec;
+//     vec.push_back(ColumnType::Long);
+//     vec.push_back(ColumnType::Int);
+//     vec.push_back(ColumnType::Int);
+//     pager.createTable("kek", &vec);
+//     Row* row = new Row(&vec);
+//     Long* i = new Long(32);
+//     row->rowData->push_back(i);
+//     Int* r = new Int(64);
+//     r->data = 72;
+//     row->rowData->push_back(r);
+//     Int* z = new Int(72);
+//     z->data = 72;
+//     row->rowData->push_back(z);
+//     pager.writeRow(1, row, &vec);
+//     // Row rowing(&vec);
+//     // rowing = pager.readRow(1);
+//     // cout << rowing << endl;
+// }
