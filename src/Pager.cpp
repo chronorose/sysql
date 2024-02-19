@@ -18,10 +18,7 @@ istream& operator>>(istream& is, Page& pg);
 
 class DBData {
     public:
-    int data;
-    int getData() {
-        return this->data;
-    }
+    int getData();
     void setData();
     virtual ~DBData() = default;
 };
@@ -99,6 +96,22 @@ class Double: public DBData {
 //         return this->data;
 //     }
 // };
+// class String: public Data<char*> {
+//     char* data;
+//     public:
+//     String() {
+//         this->data = new char[256];
+//     }
+//     void setData(char* data) {
+//         strncpy(this->data, data, 256);
+//     }
+//     char* getData() {
+//         return this->data;
+//     }
+//     ~String() {
+//         delete[] this->data;
+//     }
+// };
 
 enum class PgType {
     Leaf,
@@ -106,7 +119,7 @@ enum class PgType {
 };
 
 enum class ColumnType {
-    Int, Long, Double, String
+    Int = 4, Long, Double, String
 };
 
 class Buffer {
@@ -137,6 +150,11 @@ class TableHeader {
     long vecSize;
     long rowNum;
     vector<ColumnType>* columns;
+    TableHeader() {
+        this->columns = new vector<ColumnType>;
+        this->vecSize = 0;
+        this->rowNum = 0;
+    }
     TableHeader(vector<ColumnType>* columns) {
         this->columns = new vector<ColumnType>;
         *this->columns = *columns;
@@ -148,11 +166,6 @@ class TableHeader {
         *this->columns = *columns;
         this->vecSize = this->columns->size();
         this->rowNum = rowNum;
-    }
-    TableHeader() {
-        this->columns = new vector<ColumnType>;
-        this->vecSize = 0;
-        this->rowNum = 0;
     }
     ~TableHeader() {
         delete this->columns;
@@ -190,7 +203,7 @@ template<typename T> void writeBytes(ostream& os, DBData val) {
 template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
     auto iter { vec->begin() };
     while (iter != vec->end()) {
-        writeBytes(os, iter);
+        writeBytes(os, *iter);
         iter++;
     }
 }
@@ -364,16 +377,7 @@ istream& operator>>(istream& is, Page& pg) {
 
 class Pager {
     string fileName_;
-    // fstream file_;
-    public:
-    // Maybe bad idea
     fstream file_;
-    Pager(string fileName) {
-        this->fileName_ = fileName;
-    }
-    void redirect(string fileName) {
-        this->fileName_ = fileName;
-    }
     void open_read() {
         if (!file_.is_open()) {
             file_.open(this->fileName_, ios::binary | fstream::in);
@@ -418,6 +422,16 @@ class Pager {
         open_write();
         file_ << fhdr;
         file_.close();
+    }
+
+public:
+
+    Pager(string fileName) {
+        this->fileName_ = fileName;
+    }
+
+    void redirect(string fileName) {
+        this->fileName_ = fileName;
     }
 
     void createPage() {
@@ -472,6 +486,7 @@ class Pager {
             file_.close();
         }
     }
+
     bool checkHDR() {
         file_.seekg(0);
         char* buf = new char[SYSQL_HDR_SIZE];
@@ -488,6 +503,7 @@ class Pager {
         file_ << tblhdr;
         file_.close();
     }
+
     ~Pager() {
         file_.close();
     }

@@ -1,95 +1,151 @@
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-enum class Object { DataBase = 1, Table };
+enum class Object { DataBase = 2, Table };
 enum class Type { Int, Long, Double, String };
-enum class Option {PrimaryKey, Unique };
+enum class Option { PrimaryKey, Unique, AutoIncrement };
+enum class Operator { Equal, NotEqual, Greater, Less, GreaterOrEqual, LessOrEqual, And, Or };
 
 struct Field {
-  Type type;
-  string name;
-  vector<Option> options;
+    Type type;
+    string name;
+    vector<Option> options;
 };
 
 struct Record {
-  string name;
-  string value;
+    string name;
+    string value;
+};
+
+class Condition {
+  public:
+    string field;
+    Operator op;
+    string value;
+    Type type;
+};
+
+class Node {
+  public:
+    Condition condition;
+    Node* next;
+    Operator op;
+};
+
+class ConditionTree {
+  public:
+    Node head;
 };
 
 class Command {
   public:
-    map<string, string> getMap() {
-      return{};
+    Object object;
+    string getMap();
+    Object getObject();
+    string getName(); 
+};
+
+class List : public Command {
+  public:
+    Object object;
+    List (Object object) {
+      this->object = object;
+    }
+    Object getObject() {
+      return this->object;
+    }
+};
+
+class Use : public Command {
+  public:
+    string name;
+    string getMap() {
+        return "USE: name: " + name;
     }
 };
 
 class Create : public Command {
-private:
-  string fieldsToString() {
-    string strFields = "";
-    for (auto field: fields) {
-      strFields += to_string((int)(field.type)) + " " + field.name + " "; 
+  private:
+    string fieldsToString() {
+        string strFields = "";
+        for (auto field : fields) {
+            strFields += to_string((int) (field.type)) + " " + field.name + " ";
+        }
+        return strFields;
     }
-    return strFields;
-  }
-public:
-  Object object;
-  string name;
-  vector<Field> fields;
 
-  map<string, string> getMap() {
-    return{
-      {"object", to_string((int)(object))},
-      {"name", name},
-      {"fields", fieldsToString()}
-    };
-  }
+  public:
+    Object object;
+    string name;
+    vector<Field> fields;
+
+    Object getObject() {
+      return this->object;
+    }
+    string getName() {
+      return this->name;
+    }
+
+    string getMap() {
+        return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " + fieldsToString();
+    }
 };
 
 class Select : public Command {
-private:
-  string fieldsToString() {
-    string strFields = "";
-    for (auto field: selectedFields) {
-      strFields += field + " "; 
+  private:
+    string fieldsToString() {
+        string strFields = "";
+        for (auto field : selectedFields) {
+            strFields += field + " ";
+        }
+        return strFields;
     }
-    return strFields;
-  }
 
-public:
-  string table;
-  vector<string> selectedFields;
+  public:
+    string table;
+    vector<string> selectedFields;
+    Node condition;
 
-  map<string, string> getMap() {
-    return{
-      {"table", table},
-      {"selectedFields", fieldsToString()}
-    };
-  }
+    Object getObject();
+
+    string getMap() {
+        return "SELECT: table " + table + "i selectedFielda s" +  fieldsToString();
+    }
 };
 
 class Insert : public Command {
-private:
-  string recordsToString() {
-    string strRecords = "";
-    for (auto record: records) {
-      strRecords += record.value + " " + record.name + " "; 
+  private:
+    string recordsToString() {
+        string strRecords = "";
+        for (auto record : records) {
+            strRecords += record.value + " " + record.name + " ";
+        }
+        return strRecords;
     }
-    return strRecords;
-  }
 
-public:
-  string table;
-  vector<Record> records;
+  public:
+    string table;
+    vector<Record> records;
 
-  map<string, string> getMap() {
-    return{
-      {"table", table},
-      {"records", recordsToString()}
-    };
-  }
+    Object getObject();
+
+    string getMap() {
+        return "INSERT: table " + table + " records " + recordsToString();
+    }
 };
 
+class Drop : public Command {
+  public:
+    string name;
+    Object object;
+    
+    Object getObject() {
+      return this->object;
+    }
+    string getMap() {
+        return "DROP: name: " + name + to_string((int) object);
+    }
+};

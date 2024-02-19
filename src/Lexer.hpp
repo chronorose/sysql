@@ -24,7 +24,7 @@ enum class LexemeType {
     // Keywords
     Select, From, Create, Table, Database,
     Delete, InsertInto, PrimaryKey, Values,
-    Using,
+    Use, Drop, Or, And, Where,
 
     // Halved keywords
     Primary, Key,
@@ -35,6 +35,9 @@ enum class LexemeType {
 
     // Modificators
     Unique, AutoIncrement,
+
+    // Starts with .
+    ListDatabases, ListTables,
 
     Eof, None,
 };
@@ -50,6 +53,8 @@ map<string, LexemeType> keywords {
     { "select", LexemeType::Select },
     { "create", LexemeType::Create },
     { "delete", LexemeType::Delete },
+    { "drop", LexemeType::Drop },
+    { "where", LexemeType::Where },
     { "insert into", LexemeType::InsertInto },
     { "primary key", LexemeType::PrimaryKey },
 
@@ -67,6 +72,12 @@ map<string, LexemeType> keywords {
 
     { "auto_increment", LexemeType::AutoIncrement },
     { "unique", LexemeType::Unique },
-    { "using", LexemeType::Using },
+    { "use", LexemeType::Use },
+
+    { "and", LexemeType::And },
+    { "or", LexemeType::Or },
+
+    { ".databases", LexemeType::ListDatabases },
+    { ".tables", LexemeType::ListTables },
 
 };
