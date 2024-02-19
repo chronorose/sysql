@@ -19,7 +19,8 @@ enum class LexemeType {
     Whitespace, Comma, Dot,
     Semicolon, LeftParen, RightParen,
     LeftBracket, RightBracket, Letter,
-    Plus, Minus, Star, Equal, Quote,
+    Plus, Minus, Star, Equal, Greater, Less, Quote,
+    GreaterOrEqual, NotEqual,LessOrEqual,
 
     // Keywords
     Select, From, Create, Table, Database,

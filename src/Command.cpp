@@ -42,30 +42,31 @@ class ConditionTree {
 
 class Command {
   public:
-    Object object;
-
     string getMap() {
         return {};
     }
-    Object getObject() {
-        return {};
-    };
-    string getName() {
-      return {};
-    }
+
+    // Object getObject() {
+    //     return {};
+    // };
+    // string getName() {
+    //   return {};
+    // }
 };
 
 class List : public Command {
   public:
     Object object;
-    List (Object object) {
-      this->object = object;
+
+    List(Object object) {
+        this->object = object;
     }
 };
 
 class Use : public Command {
   public:
     string name;
+
     string getMap() {
         return "USE: name: " + name;
     }
@@ -86,15 +87,16 @@ class Create : public Command {
     string name;
     vector<Field> fields;
 
-    Object getObject() {
-      return object;
-    }
-    string getName() {
-      return name;
-    }
-
+    // Object getObject() {
+    //   return object;
+    // }
+    // string getName() {
+    //   return name;
+    // }
+    //
     string getMap() {
-        return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " + fieldsToString();
+        return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " +
+               fieldsToString();
     }
 };
 
@@ -116,7 +118,7 @@ class Select : public Command {
     Object getObject();
 
     string getMap() {
-        return "SELECT: table " + table + "i selectedFielda s" +  fieldsToString();
+        return "SELECT: table " + table + "i selectedFielda s" + fieldsToString();
     }
 };
 
@@ -145,10 +147,11 @@ class Drop : public Command {
   public:
     string name;
     Object object;
-    
+
     Object getObject() {
-      return object;
+        return object;
     }
+
     string getMap() {
         return "DROP: name: " + name + to_string((int) object);
     }

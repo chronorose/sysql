@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <filesystem>
 #include <map>
+#include <sys/select.h>
 #include <sys/types.h>
 // #include <gtest/gtest.h>
 namespace fs = std::filesystem;
@@ -84,13 +85,15 @@ class Engine {
         Database db(dbName);
         db.drop(rootDir_);
     }
+
     vector<string> listAllDb() {
-        vector<string> dbs {};
-        for(auto const& dir_entry : fs::directory_iterator(rootDir_.path())) {
+        vector<string> dbs{};
+        for (auto const& dir_entry : fs::directory_iterator(rootDir_.path())) {
             dbs.push_back(dir_entry.path().filename());
         }
         return dbs;
     }
+
     void createDb(string dbName) {
         Database db(dbName);
         db.create(rootDir_);
@@ -111,6 +114,7 @@ class Engine {
         switch (token->type) {
             case CommandType::Create: {
                 Create* create = static_cast<Create*>(token->command);
+                cout << create->name;
                 if (static_cast<Object>(create->object) == Object::DataBase) {
                     createDb(create->name);
                 } else {
@@ -128,25 +132,37 @@ class Engine {
                 break;
             }
             case CommandType::Use: {
+                Use* use = static_cast<Use*>(token->command);
+                cout << use->name;
+                delete use;
+
+                break;
             }
             case CommandType::Select: {
+                Select* select = static_cast<Select*>(token->command);
+                cout << select->getMap();
+                delete select;
+                break;
             }
             case CommandType::Insert: {
+                Insert* insert = static_cast<Insert*>(token->command);
+                cout << insert->getMap();
+                break;
             }
             case CommandType::Quit: {
-                                        exit(0);
+                exit(0);
             }
             case CommandType::List: {
-                                        List *list = static_cast<List*>(token->command);
-                                        if (static_cast<Object>(list->object) == Object::DataBase) {
-                                            for (auto db : listAllDb()) {
-                                                cout << db << endl;
-                                            }
-                                        } else {
-                                            cout << "*All tables*\n";
-                                        }
-                                        delete list;
-                                        break;
+                List* list = static_cast<List*>(token->command);
+                if (static_cast<Object>(list->object) == Object::DataBase) {
+                    for (auto db : listAllDb()) {
+                        cout << db << endl;
+                    }
+                } else {
+                    cout << "*All tables*\n";
+                }
+                delete list;
+                break;
             }
             default: {
             }

@@ -4,16 +4,17 @@
 #include <exception>
 #include <pstl/glue_execution_defs.h>
 #include <string>
+#include <sys/select.h>
 
 using namespace std;
 
 enum class CommandType { Use, Select, Insert, Create, Drop, List, Quit };
 
 class ParseException : public exception {
-    public:
-        virtual const char *what() {
-            return "Unexpected command\n";
-        }
+  public:
+    virtual const char *what() {
+        return "Unexpected command\n";
+    }
 };
 
 class Parsed {
@@ -36,7 +37,7 @@ class Parser {
 
     Node parseCondition() {
         Node tree = Node();
-        Node* current = &tree;
+        Node *current = &tree;
         for (; i + 2 < len_;) {
             if (lexemes_[i].type == LexemeType::Identifier) {
                 current->condition.field = lexemes_[i++].value;
@@ -47,21 +48,21 @@ class Parser {
                 case LexemeType::Equal:
                     current->condition.op = Operator::Equal;
                     break;
-                // case LexemeType::NotEqual:
-                //     current->condition.op = Operator::NotEqual;
-                //     break;
-                // case LexemeType::Greater:
-                //     current->condition.op = Operator::Greater;
-                //     break;
-                // case LexemeType::Less:
-                //     current->condition.op = Operator::Less;
-                //     break;
-                // case LexemeType::GreaterOrEqual:
-                //     current->condition.op = Operator::GreaterOrEqual;
-                //     break;
-                // case LexemeType::LessOrEqual:
-                //     current->condition.op = Operator::LessOrEqual;
-                //     break;
+                case LexemeType::NotEqual:
+                    current->condition.op = Operator::NotEqual;
+                    break;
+                case LexemeType::Greater:
+                    current->condition.op = Operator::Greater;
+                    break;
+                case LexemeType::Less:
+                    current->condition.op = Operator::Less;
+                    break;
+                case LexemeType::GreaterOrEqual:
+                    current->condition.op = Operator::GreaterOrEqual;
+                    break;
+                case LexemeType::LessOrEqual:
+                    current->condition.op = Operator::LessOrEqual;
+                    break;
                 default:
                     throw ParseException();
             }
@@ -96,39 +97,41 @@ class Parser {
         throw ParseException();
     }
 
-    Command parseSelect() {
-        Select select = Select();
+    Command *parseSelect() {
+        Select *select = new Select();
         if (i < len_ && lexemes_[i].type == LexemeType::Star) {
-            select.selectedFields.push_back(lexemes_[i++].value);
+            select->selectedFields.push_back(lexemes_[i++].value);
         } else {
             for (; i + 1 < len_ && lexemes_[i].type == LexemeType::Identifier; i++) {
-                select.selectedFields.push_back(lexemes_[i++].value);
+                select->selectedFields.push_back(lexemes_[i++].value);
                 if (lexemes_[i].type != LexemeType::Comma) {
                     break;
                 }
             }
         }
-        if (select.selectedFields.size() == 0) {
+        if (select->selectedFields.size() == 0) {
             throw ParseException();
         }
-        if (i + 2 < len_ && lexemes_[i].type == LexemeType::From &&
+        if (i + 1 < len_ && lexemes_[i].type == LexemeType::From &&
             lexemes_[i + 1].type == LexemeType::Identifier) {
-            select.table = lexemes_[i + 1].value;
+            select->table = lexemes_[i + 1].value;
+            i += 2;
         } else {
             throw ParseException();
         }
+
         if (i < len_ && lexemes_[i++].type == LexemeType::Where) {
-            select.condition = parseCondition();
+            select->condition = parseCondition();
         } else {
             checkEnd();
         }
         return select;
     }
 
-    Command parseInsert() {
-        Insert insert = Insert();
+    Command *parseInsert() {
+        Insert *insert = new Insert();
         if (i < len_ && lexemes_[i].type == LexemeType::Identifier) {
-            insert.table = lexemes_[i++].value;
+            insert->table = lexemes_[i++].value;
         } else {
             throw ParseException();
         }
@@ -138,7 +141,7 @@ class Parser {
         for (; i + 1 < len_ && lexemes_[i].type == LexemeType::Identifier; i++) {
             Record record;
             record.name = lexemes_[i++].value;
-            insert.records.push_back(record);
+            insert->records.push_back(record);
             if (lexemes_[i].type != LexemeType::Comma) {
                 break;
             }
@@ -153,15 +156,15 @@ class Parser {
                (lexemes_[i].type == LexemeType::String || lexemes_[i].type == LexemeType::Number ||
                 lexemes_[i].type == LexemeType::Identifier);
              i++) {
-            if (j >= insert.records.size()) {
+            if (j >= insert->records.size()) {
                 throw ParseException();
             }
-            insert.records[j++].value = lexemes_[i++].value;
+            insert->records[j++].value = lexemes_[i++].value;
             if (lexemes_[i].type != LexemeType::Comma) {
                 break;
             }
         }
-        if (!(j == insert.records.size() && i < len_ &&
+        if (!(j == insert->records.size() && i < len_ &&
               lexemes_[i++].type == LexemeType::RightParen)) {
             throw ParseException();
         }
@@ -280,10 +283,12 @@ class Parser {
         checkEnd();
         return drop;
     }
-  public:
-    Parser() {}
 
-// #define PARSE_DEBUG
+  public:
+    Parser() {
+    }
+
+    // #define PARSE_DEBUG
 
     Parsed parse(string query) {
         Lexer lexer(query);
@@ -301,30 +306,16 @@ class Parser {
                 parsed.type = CommandType::Use;
                 break;
             case LexemeType::Quit:
-                // parsed.command = new Command();
                 parsed.type = CommandType::Quit;
                 break;
-            // case LexemeType::Select:
-            //     parsed.command = parseSelect();
-            //     parsed.type = CommandType::Select;
-            //     break;
-            // case LexemeType::InsertInto:
-            //     parsed.command = parseInsert();
-            //     parsed.type = CommandType::Insert;
-            //     break;
-            // case LexemeType::Use:
-                // Parsed parsed(parseUse(), CommandType::Use);
-            //     command = parseUse();
-            //     type = CommandType::Use;
-            //     break;
-            // case LexemeType::Select:
-            //     command = parseSelect();
-            //     type = CommandType::Select;
-            //     break;
-            // case LexemeType::InsertInto:
-            //     command = parseInsert();
-            //     type = CommandType::Insert;
-            //     break;
+            case LexemeType::Select:
+                parsed.command = parseSelect();
+                parsed.type = CommandType::Select;
+                break;
+            case LexemeType::InsertInto:
+                parsed.command = parseInsert();
+                parsed.type = CommandType::Insert;
+                break;
             case LexemeType::Create:
                 parsed.command = parseCreate();
                 parsed.type = CommandType::Create;

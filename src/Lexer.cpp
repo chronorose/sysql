@@ -24,6 +24,12 @@ string LexemeTypeToString(LexemeType type) {
             return "LeftBracket";
         case LexemeType::RightBracket:
             return "RightBracket";
+        case LexemeType::Equal:
+            return "Equal";
+        case LexemeType::Greater:
+            return "Greater";
+        case LexemeType::Less:
+            return "Less";
 
         case LexemeType::Number:
             return "Number";
@@ -190,6 +196,12 @@ class Lexer {
                 return makeLexeme(LexemeType::LeftBracket, "{");
             case '}':
                 return makeLexeme(LexemeType::RightBracket, "}");
+            case '=':
+                return makeLexeme(LexemeType::Equal, "=");
+            case '<':
+                return makeLexeme(LexemeType::Less, "<");
+            case '>':
+                return makeLexeme(LexemeType::Greater, ">");
             case '.': {
                 if (matchNextLexeme("databases")) {
                     return makeLexeme(LexemeType::ListDatabases, ".databases");

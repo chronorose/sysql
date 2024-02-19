@@ -1,1 +1,3 @@
 use database "db"
+select studentID, FirstName, LastName
+from student;
