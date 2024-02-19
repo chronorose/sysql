@@ -150,6 +150,7 @@ class Engine {
                 break;
             }
             case CommandType::Quit: {
+                delete token->command;
                 exit(0);
             }
             case CommandType::List: {

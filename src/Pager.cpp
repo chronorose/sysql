@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <string.h>
+#include <vector>
 
 using namespace std;
 
@@ -26,7 +26,7 @@ istream& operator>>(istream& is, Page& pg);
 // };
 
 // template<typename T> class Data: public DBData {
-//     T data;  
+//     T data;
 //     public:
 //     T getData() {
 //         return this->data;
@@ -60,12 +60,14 @@ istream& operator>>(istream& is, Page& pg);
 //     }
 //     double getData();
 // };
-template<typename T> class DataStand {
+template <typename T> class DataStand {
     T data;
-    public:
+
+  public:
     T getData() {
         return this->data;
     }
+
     void setData(T data) {
         this->data = data;
     }
@@ -88,31 +90,29 @@ template<typename T> class DataStand {
 //     }
 // };
 
-enum class PgType {
-    Leaf,
-    Node  
-};
+enum class PgType { Leaf, Node };
 
-enum class ColumnType {
-    Int = 4, Long, Double, String
-};
+enum class ColumnType { Int = 4, Long, Double, String };
 
 class Buffer {
-    public:
+  public:
     char* buffer;
+
     Buffer(size_t size) {
         this->buffer = new char[size];
     }
+
     ~Buffer() {
         delete[] this->buffer;
     }
 };
 
 class FileHeader {
-    public:
+  public:
     long num;
     long root;
     long free;
+
     FileHeader() {
         this->num = 0;
         this->root = 0;
@@ -121,60 +121,66 @@ class FileHeader {
 };
 
 class TableHeader {
-    public:
+  public:
     long vecSize;
     long rowNum;
     vector<ColumnType>* columns;
+
     TableHeader() {
         this->columns = new vector<ColumnType>;
         this->vecSize = 0;
         this->rowNum = 0;
     }
+
     TableHeader(vector<ColumnType>* columns) {
         this->columns = new vector<ColumnType>;
         *this->columns = *columns;
         this->vecSize = this->columns->size();
         this->rowNum = 0;
     }
+
     TableHeader(vector<ColumnType>* columns, long rowNum) {
         this->columns = new vector<ColumnType>;
         *this->columns = *columns;
         this->vecSize = this->columns->size();
         this->rowNum = rowNum;
     }
+
     ~TableHeader() {
         delete this->columns;
     }
 };
 
 class Row {
-    public:
+  public:
     vector<DataStand<>>* rowData;
     vector<ColumnType>* typeData;
+
     Row(vector<ColumnType>* types) {
         this->rowData = new vector<DBData>;
         this->typeData = types;
-    }        
+    }
+
     ~Row() {
         delete this->rowData;
     }
 };
 
-template<typename T> char* toBytes(T* val) {
-    return (char*)val;
+template <typename T> char* toBytes(T* val) {
+    return (char*) val;
 }
 
-template<typename T> void writeBytes(ostream& os, T val) {
+template <typename T> void writeBytes(ostream& os, T val) {
     os.write(toBytes(&val), sizeof(val));
 }
 
-template<typename T> void writeBytes(ostream& os, DBData val) {
+template <typename T> void writeBytes(ostream& os, DBData val) {
     T value = val.getData();
     os.write(ToBytes(&value), sizeof(value));
 }
 
-template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
-    auto iter { vec->begin() };
+template <typename T> void writeBytes(ostream& os, vector<T>* vec) {
+    auto iter{vec->begin()};
     while (iter != vec->end()) {
         writeBytes(os, *iter);
         iter++;
@@ -182,9 +188,9 @@ template<typename T> void writeBytes(ostream& os, vector<T>* vec) {
 }
 
 ostream& operator<<(ostream& os, Row* row) {
-    auto iter { row->rowData->begin() };
+    auto iter{row->rowData->begin()};
     while (iter != row->rowData->end()) {
-        writeBytes(os, iter); 
+        writeBytes(os, iter);
         iter++;
     }
     return os;
@@ -206,32 +212,32 @@ ostream& operator<<(ostream& os, FileHeader fhdr) {
     return os;
 }
 
-template<typename T> T readBytes(istream& is, char* buffer) {
+template <typename T> T readBytes(istream& is, char* buffer) {
     is.read(buffer, sizeof(T));
-    return *(T*)buffer;
+    return *(T*) buffer;
 }
 
-template<typename T> T readBytes(istream& is, char* buffer, size_t size) {
+template <typename T> T readBytes(istream& is, char* buffer, size_t size) {
     is.read(buffer, size);
-    return *(T*)buffer;
+    return *(T*) buffer;
 }
 
 // readBytes for vectors; Input: input stream, vector to which we push values, size of it;
-template<typename T> void readBytes(istream& is, vector<T>* vec, size_t size) {
+template <typename T> void readBytes(istream& is, vector<T>* vec, size_t size) {
     Buffer buf(8);
-    for(size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         vec->push_back(readBytes<T>(is, buf.buffer));
     }
 }
 
 istream& operator>>(istream& is, Row& row) {
-    auto iter { row.typeData->begin() };
+    auto iter{row.typeData->begin()};
     row.rowData->clear();
     Buffer buf(256);
     bool str = false;
     while (iter != row.typeData->end()) {
         str = false;
-        switch(*iter.base()) {
+        switch (*iter.base()) {
             case ColumnType::Int:
                 Int val_int;
                 val_int.setData(readBytes<int>(is, buf.buffer));
@@ -252,7 +258,7 @@ istream& operator>>(istream& is, Row& row) {
                 break;
         }
         if (str) {
-            String val_string {};
+            String val_string{};
             val_string.setData(readBytes<char*>(is, buf.buffer, 256));
         }
         iter++;
@@ -280,13 +286,14 @@ istream& operator>>(istream& is, FileHeader& fhdr) {
 }
 
 class Page {
-public:
+  public:
     long offset;
     long parent;
     PgType type;
     long left_sibling;
     long right_sibling;
     long num;
+
     Page(long offset) {
         this->offset = offset;
         this->parent = 0;
@@ -294,11 +301,11 @@ public:
         this->left_sibling = 0;
         this->right_sibling = 0;
         this->num = 0;
-    }    
+    }
 };
 
 ostream& operator<<(ostream& os, Page& pg) {
-    os.seekp(pg.offset);   
+    os.seekp(pg.offset);
     writeBytes(os, pg.type);
     writeBytes(os, pg.parent);
     writeBytes(os, pg.left_sibling);
@@ -321,19 +328,22 @@ istream& operator>>(istream& is, Page& pg) {
 class Pager {
     string fileName_;
     fstream file_;
+
     void open_read() {
         if (!file_.is_open()) {
             file_.open(this->fileName_, ios::binary | fstream::in);
         }
     }
+
     void open_write() {
         if (!file_.is_open()) {
             file_.open(this->fileName_, ios::binary | fstream::out);
         }
     }
+
     long getRowOffset() {
         open_read();
-        TableHeader thdr {};
+        TableHeader thdr{};
         file_ << thdr;
         file_.close();
         return thdr.vecSize + 24;
@@ -367,8 +377,7 @@ class Pager {
         file_.close();
     }
 
-public:
-
+  public:
     Pager() {
         this->fileName_ = nullptr;
     }
@@ -410,7 +419,7 @@ public:
         Row row(thdr.columns);
         file_ >> row;
         return row;
-    } 
+    }
 
     void writeRow(size_t pos, Row* row, vector<ColumnType>* vec) {
         // cout << "ok";
@@ -424,11 +433,10 @@ public:
         file_ >> row1;
         auto i = row1.rowData->at(1);
         cout << i.getData();
-       // cout << row1.rowData->at(1).getData();
+        // cout << row1.rowData->at(1).getData();
     }
 
-
-    template<typename T> void writeToPage(Page& pg, T val) {
+    template <typename T> void writeToPage(Page& pg, T val) {
         if (pg.num < 253) {
             open_write();
             file_.seekp(pg.offset + pg.num++ * 16);
