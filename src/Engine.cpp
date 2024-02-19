@@ -7,7 +7,6 @@
 // #include <gtest/gtest.h>
 namespace fs = std::filesystem;
 
-namespace engine {
 int fileCount(fs::path path) {
     DIR* dp;
     int i = 0;
@@ -47,7 +46,7 @@ class Database {
         int rmEntries = remove_all(fs::path(root.path() / dbName_));
         if (rmEntries == 0) {
             cout << "Database \"" << dbName_ << "\" doesn't exist" << endl;
-        } else if (rmEntries - 1 == engine::fileCount(root.path() / dbName_)) {
+        } else if (rmEntries - 1 == fileCount(root.path() / dbName_)) {
             cout << "Database \"" << dbName_ << "\" successfully deleted" << endl;
         }
     }
@@ -87,6 +86,14 @@ class Engine {
         db.drop(rootDir_);
     }
 
+    vector<string> listAllDb() {
+        vector<string> dbs{};
+        for (auto const& dir_entry : fs::directory_iterator(rootDir_.path())) {
+            dbs.push_back(dir_entry.path().filename());
+        }
+        return dbs;
+    }
+
     void createDb(string dbName) {
         Database db(dbName);
         db.create(rootDir_);
@@ -113,6 +120,7 @@ class Engine {
                 } else {
                     // TODO for tables
                 }
+                delete create;
                 break;
             }
             case CommandType::Drop: {
@@ -120,33 +128,39 @@ class Engine {
                 if (static_cast<Object>(drop->object) == Object::DataBase) {
                     dropDb(drop->name);
                 }
+                delete drop;
                 break;
             }
             case CommandType::Use: {
                 Use* use = static_cast<Use*>(token->command);
-                cout << use->name;
-                
-                break;
+                delete use;
 
+                break;
             }
             case CommandType::Select: {
                 Select* select = static_cast<Select*>(token->command);
-                cout << select->getMap();
+                delete select;
                 break;
-
-
             }
             case CommandType::Insert: {
                 Insert* insert = static_cast<Insert*>(token->command);
-                cout << insert->getMap();
                 break;
-
+            }
+            case CommandType::Quit: {
+                delete token->command;
+                exit(0);
             }
             case CommandType::List: {
-                List* list = static_cast<List*>(token->command);   
-                cout << list->getMap();
+                List* list = static_cast<List*>(token->command);
+                if (static_cast<Object>(list->object) == Object::DataBase) {
+                    for (auto db : listAllDb()) {
+                        cout << db << endl;
+                    }
+                } else {
+                    cout << "*All tables*\n";
+                }
+                delete list;
                 break;
-
             }
             default: {
             }
@@ -183,10 +197,9 @@ class Engine {
         delete currentDb_;
     }
 };
-}
 
 int main() {
-    engine::Engine* engine = new engine::Engine();
+    Engine* engine = new Engine();
     engine->run();
     delete engine;
     return 0;
