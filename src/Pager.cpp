@@ -46,56 +46,7 @@ class Double: public DBData {
         this->data = data;
     }
 };
-// template<typename T> class Data: public DBData {
-//     T data;  
-//     public:
-//     T getData() {
-//         return this->data;
-//     }
-//     void setData(T data) {
-//         this->data = data;
-//     }
-// };
 
-// class Int: public Data<int> {
-//     int data;
-//     public:
-//     Int(int data) {
-//         this->data = data;
-//     }
-//     void setData(int data) {
-//         this->data = data;
-//     }
-//     int getData() {
-//         return this->data;
-//     }
-// };
-// class Long: public Data<long> {
-//     long data;
-//     public:
-//     Long(long data) {
-//         this->data = data;
-//     }
-//     void setData(long data) {
-//         this->data = data;
-//     }
-//     long getData() {
-//         return this->data;
-//     }
-// };
-// class Double: public Data<double> {
-//     double data;
-//     public:
-//     Double(double data) {
-//         this->data = data;
-//     }
-//     void setData(double data) {
-//         this->data = data;
-//     }
-//     double getData() {
-//         return this->data;
-//     }
-// };
 // class String: public Data<char*> {
 //     char* data;
 //     public:
@@ -181,7 +132,14 @@ class Row {
         this->typeData = new vector<ColumnType>;
         *this->typeData = *types;
     }        
+    void addToRow(ColumnType type, DBData* data) {
+        this->typeData->push_back(type);
+        this->rowData->push_back(data);
+    } 
     ~Row() {
+        for (size_t i = 0; i < this->rowData->size(); i++) {
+            delete this->rowData->at(i);
+        }
         delete this->rowData;
         delete this->typeData;
     }
@@ -287,31 +245,6 @@ istream& operator>>(istream& is, Row& row) {
             Double* n = new Double(s);
             row.rowData->push_back(n);
         }
-        // switch(*iter.base()) {
-        //     case ColumnType::Int:
-        //         Int* val_int;
-        //         val_int->setData(readBytes<int>(is, buf.buffer));
-        //         row.rowData->push_back(val_int);
-        //         break;
-        //     case ColumnType::Long:
-        //         Long* val_long;
-        //         val_long->setData(readBytes<long>(is, buf.buffer));
-        //         row.rowData->push_back(val_long);
-        //         break;
-        //     case ColumnType::String:
-        //         str = true;
-        //         break;
-        //     case ColumnType::Double:
-        //         Double* val_double;
-        //         val_double->setData(readBytes<double>(is, buf.buffer));
-        //         row.rowData->push_back(val_double);
-        //         break;
-        // }
-        // if (str) {
-        //     String* val_string {};
-        //     val_string->setData(readBytes<char*>(is, buf.buffer, 256));
-        //     row.rowData->push_back(val_string);
-        // }
         iter++;
     }
     return is;
@@ -475,11 +408,6 @@ public:
         file_.seekp(thdr.vecSize * (pos + 1));
         file_ << row;
         file_.close();
-        // open_read();
-        // file_ >> *row;
-        // Long* lng = new Long(0);
-        // lng = dynamic_cast<Long*>(row->rowData->at(0));
-        // cout << lng->data;
     }
 
     template<typename T> void writeToPage(Page& pg, T val) {
