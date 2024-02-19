@@ -195,6 +195,8 @@ class Lexer {
                     return makeLexeme(LexemeType::ListDatabases, ".databases");
                 } else if (matchNextLexeme("tables")) {
                     return makeLexeme(LexemeType::ListTables, ".tables");
+                } else if (matchNextLexeme("quit")) {
+                    return makeLexeme(LexemeType::Quit, ".quit");
                 }
                 return makeLexeme(LexemeType::Dot, "Dot");
             }

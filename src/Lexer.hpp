@@ -37,7 +37,7 @@ enum class LexemeType {
     Unique, AutoIncrement,
 
     // Starts with .
-    ListDatabases, ListTables,
+    ListDatabases, ListTables, Quit,
 
     Eof, None,
 };
@@ -79,5 +79,6 @@ map<string, LexemeType> keywords {
 
     { ".databases", LexemeType::ListDatabases },
     { ".tables", LexemeType::ListTables },
+    { ".quit", LexemeType::Quit },
 
 };

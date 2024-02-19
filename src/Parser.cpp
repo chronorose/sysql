@@ -7,7 +7,7 @@
 
 using namespace std;
 
-enum class CommandType { Use, Select, Insert, Create, Drop, List };
+enum class CommandType { Use, Select, Insert, Create, Drop, List, Quit };
 
 class ParseException : public exception {
     public:
@@ -245,13 +245,13 @@ class Parser {
         return create;
     }
 
-    Command parseUse() {
-        Use use = Use();
+    Command *parseUse() {
+        Use *use = new Use();
         if (!(i + 1 < len_ && lexemes_[i].type == LexemeType::Database &&
               lexemes_[i + 1].type == LexemeType::Identifier)) {
             throw ParseException();
         }
-        use.name = lexemes_[i + 1].value;
+        use->name = lexemes_[i + 1].value;
         i += 2;
         checkEnd();
         return use;
@@ -296,10 +296,14 @@ class Parser {
         len_ = lexemes_.size();
         Parsed parsed;
         switch (lexemes_[i++].type) {
-            // case LexemeType::Use:
-            //     parsed.command = parseUse();
-            //     parsed.type = CommandType::Use;
-            //     break;
+            case LexemeType::Use:
+                parsed.command = parseUse();
+                parsed.type = CommandType::Use;
+                break;
+            case LexemeType::Quit:
+                // parsed.command = new Command();
+                parsed.type = CommandType::Quit;
+                break;
             // case LexemeType::Select:
             //     parsed.command = parseSelect();
             //     parsed.type = CommandType::Select;

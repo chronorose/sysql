@@ -6,7 +6,6 @@
 // #include <gtest/gtest.h>
 namespace fs = std::filesystem;
 
-namespace engine {
 int fileCount(fs::path path) {
     DIR* dp;
     int i = 0;
@@ -46,7 +45,7 @@ class Database {
         int rmEntries = remove_all(fs::path(root.path() / dbName_));
         if (rmEntries == 0) {
             cout << "Database \"" << dbName_ << "\" doesn't exist" << endl;
-        } else if (rmEntries - 1 == engine::fileCount(root.path() / dbName_)) {
+        } else if (rmEntries - 1 == fileCount(root.path() / dbName_)) {
             cout << "Database \"" << dbName_ << "\" successfully deleted" << endl;
         }
     }
@@ -117,6 +116,7 @@ class Engine {
                 } else {
                     // TODO for tables
                 }
+                delete create;
                 break;
             }
             case CommandType::Drop: {
@@ -124,6 +124,7 @@ class Engine {
                 if (static_cast<Object>(drop->object) == Object::DataBase) {
                     dropDb(drop->name);
                 }
+                delete drop;
                 break;
             }
             case CommandType::Use: {
@@ -131,6 +132,9 @@ class Engine {
             case CommandType::Select: {
             }
             case CommandType::Insert: {
+            }
+            case CommandType::Quit: {
+                                        exit(0);
             }
             case CommandType::List: {
                                         List *list = static_cast<List*>(token->command);
@@ -141,6 +145,7 @@ class Engine {
                                         } else {
                                             cout << "*All tables*\n";
                                         }
+                                        delete list;
                                         break;
             }
             default: {
@@ -178,10 +183,9 @@ class Engine {
         delete currentDb_;
     }
 };
-}
 
 int main() {
-    engine::Engine* engine = new engine::Engine();
+    Engine* engine = new Engine();
     engine->run();
     delete engine;
     return 0;
