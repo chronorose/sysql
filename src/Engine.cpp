@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <filesystem>
 #include <map>
+#include <sys/select.h>
 #include <sys/types.h>
 // #include <gtest/gtest.h>
 namespace fs = std::filesystem;
@@ -106,6 +107,7 @@ class Engine {
         switch (token->type) {
             case CommandType::Create: {
                 Create* create = static_cast<Create*>(token->command);
+                cout << create->name;
                 if (static_cast<Object>(create->object) == Object::DataBase) {
                     createDb(create->name);
                 } else {
@@ -121,12 +123,30 @@ class Engine {
                 break;
             }
             case CommandType::Use: {
+                Use* use = static_cast<Use*>(token->command);
+                cout << use->name;
+                
+                break;
+
             }
             case CommandType::Select: {
+                Select* select = static_cast<Select*>(token->command);
+                cout << select->getMap();
+                break;
+
+
             }
             case CommandType::Insert: {
+                Insert* insert = static_cast<Insert*>(token->command);
+                cout << insert->getMap();
+                break;
+
             }
             case CommandType::List: {
+                List* list = static_cast<List*>(token->command);   
+                cout << list->getMap();
+                break;
+
             }
             default: {
             }

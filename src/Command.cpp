@@ -42,17 +42,15 @@ class ConditionTree {
 
 class Command {
   public:
-    Object object;
-
     string getMap() {
         return {};
     }
-    Object getObject() {
-        return {};
-    };
-    string getName() {
-      return {};
-    }
+    // Object getObject() {
+    //     return {};
+    // };
+    // string getName() {
+    //   return {};
+    // }
 };
 
 class List : public Command {
@@ -86,13 +84,13 @@ class Create : public Command {
     string name;
     vector<Field> fields;
 
-    Object getObject() {
-      return object;
-    }
-    string getName() {
-      return name;
-    }
-
+    // Object getObject() {
+    //   return object;
+    // }
+    // string getName() {
+    //   return name;
+    // }
+    //
     string getMap() {
         return "CREATE: object " + to_string((int) (object)) + " name " + name + " fields " + fieldsToString();
     }
